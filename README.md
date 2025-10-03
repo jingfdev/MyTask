@@ -1,6 +1,6 @@
 # mytask_project
 
-A new Flutter project.
+mytask_project is a to-do-list project designed for MAD class.
 
 ## Getting Started
 
