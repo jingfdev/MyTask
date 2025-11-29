@@ -46,6 +46,17 @@ class SupabaseService {
     );
   }
 
+  /// Sign in with email and password
+  Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
+    return await client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+  }
+
   /// Sign in with Google
   Future<AuthResponse> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn();

@@ -28,6 +28,7 @@ class UserViewModel extends ChangeNotifier {
           id: currentUser.id,
           email: currentUser.email ?? '',
           fullName: currentUser.userMetadata?['full_name'] as String?,
+          createdAt: DateTime.now(),
         );
         _isAuthenticated = true;
       }
@@ -57,6 +58,7 @@ class UserViewModel extends ChangeNotifier {
       _user = User(
         id: response.user!.id,
         email: response.user!.email ?? '',
+        createdAt: DateTime.now(),
       );
       _isAuthenticated = true;
       return true;
@@ -87,6 +89,7 @@ class UserViewModel extends ChangeNotifier {
       _user = User(
         id: response.user!.id,
         email: response.user!.email ?? '',
+        createdAt: DateTime.now(),
       );
       _isAuthenticated = true;
       return true;
