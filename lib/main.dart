@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mytask_project/config/supabase_config.dart';
 import 'package:mytask_project/services/supabase_service.dart';
 import 'package:mytask_project/services/notification_service.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
@@ -17,11 +18,11 @@ import 'package:mytask_project/views/screens/main_navigation_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase (Replace with your actual Supabase credentials)
+  // Initialize Supabase using config file
   try {
     await SupabaseService.initialize(
-      url: 'https://your-supabase-url.supabase.co',
-      anonKey: 'your-supabase-anon-key',
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
     );
   } catch (e) {
     print('Supabase initialization error: $e');
