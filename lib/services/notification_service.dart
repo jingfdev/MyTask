@@ -25,10 +25,17 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings =
+    /// 🔥 Linux initialization -- REQUIRED on Linux!
+    final LinuxInitializationSettings initializationSettingsLinux =
+        const LinuxInitializationSettings(
+      defaultActionName: 'open',
+    );
+
+    final InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
+      linux: initializationSettingsLinux,   // ✅ Add this line
     );
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
@@ -67,6 +74,7 @@ class NotificationService {
           presentBadge: true,
           presentSound: true,
         ),
+        linux: LinuxNotificationDetails(), // optional but safe
       ),
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
@@ -84,7 +92,7 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 
-  /// Show instant notification (for testing)
+  /// Show instant notification
   Future<void> showInstantNotification({
     required String title,
     required String body,
@@ -106,6 +114,7 @@ class NotificationService {
           presentBadge: true,
           presentSound: true,
         ),
+        linux: LinuxNotificationDetails(), // optional
       ),
     );
   }
