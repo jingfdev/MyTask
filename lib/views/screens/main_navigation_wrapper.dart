@@ -14,7 +14,7 @@ class MainNavigationWrapper extends StatefulWidget {
 class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
+  final List<Widget> _screens = const [
     HomePage(),
     TaskListScreen(),
     CalendarScreen(),
