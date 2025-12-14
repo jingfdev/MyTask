@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mytask_project/config/supabase_config.dart';
-import 'package:mytask_project/services/supabase_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
+
 import 'package:mytask_project/services/notification_service.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/views/screens/welcome_screen.dart';
 import 'package:mytask_project/views/screens/onboarding_screen.dart';
-import 'package:mytask_project/views/screens/home_page.dart';
 import 'package:mytask_project/views/screens/task_list_screen.dart';
 import 'package:mytask_project/views/screens/task_form_page.dart';
 import 'package:mytask_project/views/screens/calendar_screen.dart';
@@ -18,17 +19,12 @@ import 'package:mytask_project/views/screens/main_navigation_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase using config file
-  try {
-    await SupabaseService.initialize(
-      url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.anonKey,
-    );
-  } catch (e) {
-    print('Supabase initialization error: $e');
-  }
+  // ✅ Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  // Initialize notifications
+  // ✅ Initialize notifications
   await NotificationService().initialize();
 
   runApp(const MyApp());
@@ -50,7 +46,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
             backgroundColor: Colors.white,
             elevation: 0,
             centerTitle: false,

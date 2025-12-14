@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/views/widgets/task_card.dart';
 
@@ -11,7 +13,53 @@ class TaskListScreen extends StatefulWidget {
 }
 
 class _TaskListScreenState extends State<TaskListScreen> {
-  String _selectedFilter = 'all'; // 'all', 'today', 'upcoming'
+  String _selectedFilter = 'all'; // all | today | upcoming
+  String _searchQuery = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    await context.read<TaskViewModel>().fetchTasks();
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  List<Task> _applyFilters(List<Task> tasks) {
+    final now = DateTime.now();
+
+    List<Task> filtered = tasks.where((task) {
+      if (_searchQuery.isNotEmpty &&
+          !task.title
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      if (_selectedFilter == 'today') {
+        if (task.dueDate == null) return false;
+        return task.dueDate!.year == now.year &&
+            task.dueDate!.month == now.month &&
+            task.dueDate!.day == now.day;
+      }
+
+      if (_selectedFilter == 'upcoming') {
+        if (task.dueDate == null) return false;
+        return task.dueDate!.isAfter(
+          DateTime(now.year, now.month, now.day, 23, 59),
+        );
+      }
+
+      return true;
+    }).toList();
+
+    return filtered;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,48 +70,46 @@ class _TaskListScreenState extends State<TaskListScreen> {
         title: Text(
           'My Tasks',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Colors.black87),
-            onPressed: () {
-              // Show search dialog
-              _showSearchDialog(context);
-            },
+            icon: const Icon(Icons.search, color: Colors.black87),
+            onPressed: () => _showSearchDialog(context),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Filter Chips
+          // Filters
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             color: Colors.white,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   _buildFilterChip('All', 'all'),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   _buildFilterChip('Today', 'today'),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   _buildFilterChip('Upcoming', 'upcoming'),
                 ],
               ),
             ),
           ),
+
           // Task List
           Expanded(
             child: Consumer<TaskViewModel>(
               builder: (context, viewModel, _) {
-                if (viewModel.isLoading) {
-                  return Center(child: CircularProgressIndicator());
+                if (_isLoading) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                final tasks = viewModel.tasks;
+                final tasks = _applyFilters(viewModel.tasks);
 
                 if (tasks.isEmpty) {
                   return Center(
@@ -72,15 +118,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       children: [
                         Icon(Icons.inbox,
                             size: 60, color: Colors.grey[300]),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
                           'No tasks found',
                           style: Theme.of(context)
                               .textTheme
                               .bodyLarge
-                              ?.copyWith(
-                                color: Colors.grey[500],
-                              ),
+                              ?.copyWith(color: Colors.grey[500]),
                         ),
                       ],
                     ),
@@ -88,12 +132,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 }
 
                 return ListView.builder(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
                     final task = tasks[index];
                     return Padding(
-                      padding: EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: TaskCard(task: task),
                     );
                   },
@@ -108,13 +152,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   Widget _buildFilterChip(String label, String value) {
     final isActive = _selectedFilter == value;
+
     return GestureDetector(
       onTap: () {
         setState(() => _selectedFilter = value);
-        context.read<TaskViewModel>().setFilter(value);
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isActive ? Colors.blue[600] : Colors.grey[100],
           borderRadius: BorderRadius.circular(20),
@@ -125,9 +169,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: isActive ? Colors.white : Colors.grey[700],
-                fontWeight: FontWeight.w600,
-              ),
+            color: isActive ? Colors.white : Colors.grey[700],
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -137,20 +181,20 @@ class _TaskListScreenState extends State<TaskListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Search Tasks'),
+        title: const Text('Search Tasks'),
         content: TextField(
-          decoration: InputDecoration(
-            hintText: 'Enter task name...',
+          decoration: const InputDecoration(
+            hintText: 'Enter task title...',
             border: OutlineInputBorder(),
           ),
-          onChanged: (query) {
-            context.read<TaskViewModel>().searchTasks(query);
+          onChanged: (value) {
+            setState(() => _searchQuery = value);
           },
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),

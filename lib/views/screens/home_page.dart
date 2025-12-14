@@ -12,15 +12,41 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedTab = 0; // 0: Today, 1: Upcoming
+  int _selectedTab = 0; // 0 = Today, 1 = Upcoming
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Initialize tasks on page load
-    Future.microtask(() {
-      context.read<TaskViewModel>().initialize();
-    });
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    final viewModel = context.read<TaskViewModel>();
+    await viewModel.fetchTasks();
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  List<Task> _getTodayTasks(List<Task> allTasks) {
+    final today = DateTime.now();
+    return allTasks.where((task) {
+      if (task.dueDate == null) return false;
+      return task.dueDate!.year == today.year &&
+          task.dueDate!.month == today.month &&
+          task.dueDate!.day == today.day;
+    }).toList();
+  }
+
+  List<Task> _getUpcomingTasks(List<Task> allTasks) {
+    final today = DateTime.now();
+    return allTasks.where((task) {
+      if (task.dueDate == null) return false;
+      return task.dueDate!.isAfter(
+        DateTime(today.year, today.month, today.day, 23, 59),
+      );
+    }).toList();
   }
 
   @override
@@ -32,9 +58,9 @@ class _HomePageState extends State<HomePage> {
         title: Text(
           'My Tasks',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -50,26 +76,28 @@ class _HomePageState extends State<HomePage> {
           // Tabs
           Container(
             color: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 _buildTab('Today', 0),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 _buildTab('Upcoming', 1),
               ],
             ),
           ),
+
           // Task List
           Expanded(
             child: Consumer<TaskViewModel>(
               builder: (context, viewModel, _) {
-                if (viewModel.isLoading) {
-                  return Center(child: CircularProgressIndicator());
+                if (_isLoading) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                List<Task> displayTasks = _selectedTab == 0
-                    ? viewModel.getTodayTasks()
-                    : viewModel.getUpcomingTasks();
+                final allTasks = viewModel.tasks;
+                final displayTasks = _selectedTab == 0
+                    ? _getTodayTasks(allTasks)
+                    : _getUpcomingTasks(allTasks);
 
                 if (displayTasks.isEmpty) {
                   return Center(
@@ -77,14 +105,15 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.inbox, size: 60, color: Colors.grey[300]),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
                           _selectedTab == 0
                               ? 'No tasks for today'
                               : 'No upcoming tasks',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Colors.grey[500],
-                              ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(color: Colors.grey[500]),
                         ),
                       ],
                     ),
@@ -92,12 +121,12 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 return ListView.builder(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   itemCount: displayTasks.length,
                   itemBuilder: (context, index) {
                     final task = displayTasks[index];
                     return Padding(
-                      padding: EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: TaskCard(task: task),
                     );
                   },
@@ -119,13 +148,13 @@ class _HomePageState extends State<HomePage> {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: isActive ? Colors.blue[600] : Colors.grey[500],
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                ),
+              color: isActive ? Colors.blue[600] : Colors.grey[500],
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
           if (isActive)
             Container(
-              margin: EdgeInsets.only(top: 8),
+              margin: const EdgeInsets.only(top: 8),
               height: 3,
               width: 30,
               decoration: BoxDecoration(

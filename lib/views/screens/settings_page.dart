@@ -10,6 +10,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool _darkMode = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,15 +19,15 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Settings',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -39,20 +41,10 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: Icons.person,
               title: 'Account Details',
               subtitle: 'Manage your account information',
-              onTap: () {
-                // Navigate to account details
-              },
-            ),
-            _buildSettingTile(
-              context,
-              icon: Icons.lock,
-              title: 'Change Password',
-              subtitle: 'Update your password',
-              onTap: () {
-                // Navigate to change password
-              },
+              onTap: () {},
             ),
             Divider(),
+
             // Preferences Section
             _buildSectionHeader('Preferences', context),
             _buildSwitchTile(
@@ -60,35 +52,13 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: Icons.dark_mode,
               title: 'Dark Mode',
               subtitle: 'Enable dark mode',
+              value: _darkMode,
               onChanged: (value) {
-                context.read<UserViewModel>().updatePreferences(
-                      darkMode: value,
-                    );
-              },
-            ),
-            _buildSettingTile(
-              context,
-              icon: Icons.notifications,
-              title: 'Notifications',
-              subtitle: 'Manage notification settings',
-              trailing: Icon(Icons.arrow_forward_ios,
-                  size: 16, color: Colors.grey[400]),
-              onTap: () {
-                // Navigate to notifications
-              },
-            ),
-            _buildSettingTile(
-              context,
-              icon: Icons.alarm,
-              title: 'Reminders',
-              subtitle: 'Set reminders for tasks',
-              trailing: Icon(Icons.arrow_forward_ios,
-                  size: 16, color: Colors.grey[400]),
-              onTap: () {
-                // Navigate to reminders
+                setState(() => _darkMode = value);
               },
             ),
             Divider(),
+
             // Support Section
             _buildSectionHeader('Support', context),
             _buildSettingTile(
@@ -96,28 +66,16 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: Icons.help,
               title: 'Help & Support',
               subtitle: 'Get help and contact support',
-              trailing: Icon(Icons.arrow_forward_ios,
-                  size: 16, color: Colors.grey[400]),
               onTap: () {
-                // Show help dialog
                 _showHelpDialog(context);
               },
             ),
-            _buildSettingTile(
-              context,
-              icon: Icons.privacy_tip,
-              title: 'Privacy Policy',
-              subtitle: 'Read our privacy policy',
-              trailing: Icon(Icons.arrow_forward_ios,
-                  size: 16, color: Colors.grey[400]),
-              onTap: () {
-                // Navigate to privacy policy
-              },
-            ),
-            SizedBox(height: 20),
+
+            const SizedBox(height: 20),
+
             // Sign Out Button
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -126,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    side: BorderSide(color: Colors.red[300]!),
+                    side: BorderSide(color: Colors.red.shade300),
                   ),
                   onPressed: () {
                     _showSignOutDialog(context);
@@ -134,14 +92,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Text(
                     'Sign Out',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.red[600],
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Colors.red[600],
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -150,74 +108,69 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSectionHeader(String title, BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[700],
+        ),
       ),
     );
   }
 
   Widget _buildSettingTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required VoidCallback onTap,
+      }) {
     return ListTile(
       leading: Icon(icon, color: Colors.blue[600]),
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+          fontWeight: FontWeight.w500,
+        ),
       ),
       subtitle: Text(
         subtitle,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+          color: Colors.grey[600],
+        ),
       ),
-      trailing: trailing,
       onTap: onTap,
     );
   }
 
   Widget _buildSwitchTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Consumer<UserViewModel>(
-      builder: (context, viewModel, _) {
-        return ListTile(
-          leading: Icon(icon, color: Colors.blue[600]),
-          title: Text(
-            title,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
-          ),
-          trailing: Switch(
-            value: viewModel.user?.darkMode ?? false,
-            onChanged: onChanged,
-            activeColor: Colors.blue[600],
-          ),
-        );
-      },
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required bool value,
+        required ValueChanged<bool> onChanged,
+      }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blue[600]),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Colors.grey[600],
+        ),
+      ),
+      trailing: Switch(
+        value: value,
+        onChanged: onChanged,
+        activeColor: Colors.blue[600],
+      ),
     );
   }
 
@@ -225,40 +178,14 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Help & Support'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'TaskMaster Support',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(height: 12),
-            Text(
-              'For help or support, please contact us:',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Email: support@taskmaster.app',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.blue[600],
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Phone: 1-800-TASK-MASTER',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.blue[600],
-              ),
-            ),
-          ],
+        title: const Text('Help & Support'),
+        content: const Text(
+          'For help or support, please contact:\n\nsupport@taskmaster.app',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -269,12 +196,12 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Sign Out?'),
-        content: Text('Are you sure you want to sign out?'),
+        title: const Text('Sign Out?'),
+        content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
@@ -282,7 +209,10 @@ class _SettingsPageState extends State<SettingsPage> {
               Navigator.pop(context);
               Navigator.of(context).pushReplacementNamed('/welcome');
             },
-            child: Text('Sign Out', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Sign Out',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
