@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
 
 import 'package:mytask_project/services/notification_service.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
+import 'package:mytask_project/viewmodels/notification_viewmodel.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/views/screens/welcome_screen.dart';
 import 'package:mytask_project/views/screens/onboarding_screen.dart';
@@ -15,6 +17,21 @@ import 'package:mytask_project/views/screens/task_form_page.dart';
 import 'package:mytask_project/views/screens/calendar_screen.dart';
 import 'package:mytask_project/views/screens/settings_page.dart';
 import 'package:mytask_project/views/screens/main_navigation_wrapper.dart';
+import 'package:mytask_project/views/screens/notifications_screen.dart';
+
+/// Background message handler for Firebase Cloud Messaging
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('📬 Handling background message: ${message.messageId}');
+
+  // Show notification even in background
+  if (message.notification != null) {
+    await NotificationService().showInstantNotification(
+      title: message.notification!.title ?? 'New Notification',
+      body: message.notification!.body ?? '',
+      payload: message.data,
+    );
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +43,9 @@ void main() async {
 
   // ✅ Initialize notifications
   await NotificationService().initialize();
+
+  // ✅ Set up background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
 }
@@ -39,6 +59,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => UserViewModel()),
         ChangeNotifierProvider(create: (_) => TaskViewModel()),
+        ChangeNotifierProvider(create: (_) => NotificationViewModel()),
       ],
       child: MaterialApp(
         title: 'TaskMaster',
@@ -61,6 +82,7 @@ class MyApp extends StatelessWidget {
           '/add-task': (_) => TaskFormPage(),
           '/calendar': (_) => CalendarScreen(),
           '/settings': (_) => SettingsPage(),
+          '/notifications': (_) => NotificationsScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/edit-task') {

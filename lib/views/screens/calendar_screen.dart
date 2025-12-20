@@ -28,6 +28,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _loadTasksForDate(DateTime date) async {
+    if (!mounted) return;
+
     final viewModel = context.read<TaskViewModel>();
     final tasks = await viewModel.getTasksByDate(date);
 

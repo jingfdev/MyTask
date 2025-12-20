@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/task.dart'; // ✅ THIS WAS MISSING
+import '../models/task.dart';
+import '../services/notification_service.dart';
+import 'notification_viewmodel.dart';
 
 class TaskViewModel extends ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late NotificationViewModel _notificationViewModel;
 
   List<Task> tasks = [];
+
+  TaskViewModel() {
+    _notificationViewModel = NotificationViewModel();
+  }
 
   /// Fetch all tasks
   Future<void> fetchTasks() async {
@@ -22,21 +29,69 @@ class TaskViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Add a new task
+  /// Add a new task with notification
   Future<void> addTask(Task task) async {
     await _db.collection('tasks').add(task.toMap());
+
+    // Send notification for task creation
+    await _notificationViewModel.sendTaskCreatedNotification(task);
+
+    // Schedule deadline reminder if due date exists
+    if (task.dueDate != null) {
+      await _notificationViewModel.sendTaskDueReminder(task);
+      await _notificationViewModel.sendDeadlineApproachingNotification(task);
+    }
+
     await fetchTasks();
   }
 
-  /// Update existing task
+  /// Update existing task with notification
   Future<void> updateTask(Task task) async {
     await _db.collection('tasks').doc(task.id).update(task.toMap());
+
+    // Send notification for task update
+    await _notificationViewModel.sendTaskUpdatedNotification(task);
+
+    // Re-schedule notifications if due date changed
+    await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
+    if (task.dueDate != null) {
+      await _notificationViewModel.sendDeadlineApproachingNotification(task);
+    }
+
     await fetchTasks();
   }
 
   /// Delete task
   Future<void> deleteTask(String id) async {
     await _db.collection('tasks').doc(id).delete();
+
+    // Cancel associated notifications
+    await NotificationService().cancelNotification(id.hashCode);
+    await NotificationService().cancelNotification((id + '_deadline').hashCode);
+
+    await fetchTasks();
+  }
+
+  /// Mark task as completed with notification
+  Future<void> completeTask(Task task) async {
+    final completedTask = Task(
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      isCompleted: true,
+      createdAt: task.createdAt,
+      dueDate: task.dueDate,
+    );
+
+    await _db.collection('tasks').doc(task.id).update(completedTask.toMap());
+
+    // Send completion notification
+    await _notificationViewModel.sendTaskCompletedNotification(completedTask);
+
+    // Cancel scheduled notifications
+    await NotificationService().cancelNotification(task.id.hashCode);
+    await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
+
     await fetchTasks();
   }
 
@@ -60,5 +115,11 @@ class TaskViewModel extends ChangeNotifier {
     return snapshot.docs
         .map((doc) => Task.fromMap(doc.data(), doc.id))
         .toList();
+  }
+
+  @override
+  void dispose() {
+    _notificationViewModel.dispose();
+    super.dispose();
   }
 }
