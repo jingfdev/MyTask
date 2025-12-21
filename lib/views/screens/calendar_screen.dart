@@ -25,11 +25,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   late ConfettiController _confettiController;
 
-  final List<Map<String, dynamic>> _celebrations = [
-    {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent},
-    {"title": "Unstoppable!", "msg": "Perfect day completed!", "icon": "🚀", "color": Colors.blueAccent},
-    {"title": "Victory!", "msg": "All items checked.", "icon": "⭐", "color": Colors.purpleAccent},
-  ];
+ final List<Map<String, dynamic>> _celebrations = [
+  // --- High Energy / Productivity ---
+  {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent},
+  {"title": "Unstoppable!", "msg": "Perfect day completed!", "icon": "🚀", "color": Colors.blueAccent},
+  {"title": "Victory!", "msg": "All items checked. Great focus!", "icon": "⭐", "color": Colors.purpleAccent},
+  {"title": "Productivity King!", "msg": "You made that look easy.", "icon": "👑", "color": Colors.amber},
+  {"title": "Task Slayer!", "msg": "Everything on the list is gone.", "icon": "⚔️", "color": Colors.redAccent},
+  {"title": "God Mode!", "msg": "Is there anything you can't do?", "icon": "⚡", "color": Colors.cyanAccent},
+  
+  // --- Zen / Calm / Satisfying ---
+  {"title": "Clean Sweep!", "msg": "A perfectly empty list. So satisfying.", "icon": "🧹", "color": Colors.tealAccent},
+  {"title": "Pure Focus!", "msg": "You were in the zone today.", "icon": "🧘", "color": Colors.lightGreenAccent},
+  {"title": "Mind Like Water", "msg": "You handled everything with ease.", "icon": "🌊", "color": Colors.blue},
+  {"title": "Well Deserved Rest", "msg": "Day finished. Time to unplug.", "icon": "🌙", "color": Colors.indigoAccent},
+  
+  // --- Fun / Playful ---
+  {"title": "Boom Shakalaka!", "msg": "You're on fire today!", "icon": "🔥", "color": Colors.deepOrange},
+  {"title": "Level Up!", "msg": "Your productivity stats just peaked.", "icon": "🎮", "color": Colors.greenAccent},
+  {"title": "Checkmate!", "msg": "You played today perfectly.", "icon": "♟️", "color": Colors.blueGrey},
+  {"title": "Bullseye!", "msg": "Hit every single target on the list.", "icon": "🎯", "color": Colors.red},
+  {"title": "Magic Touch!", "msg": "How do you get so much done?", "icon": "🪄", "color": Colors.pinkAccent},
+
+  // --- Short & Punchy ---
+  {"title": "Flawless!", "msg": "100% completion achieved.", "icon": "💎", "color": Colors.lightBlueAccent},
+  {"title": "Beast Mode", "msg": "List: 0 | You: 1", "icon": "🦁", "color": Colors.brown},
+  {"title": "Done & Dusted", "msg": "See you tomorrow!", "icon": "✅", "color": Colors.green},
+  {"title": "Legendary!", "msg": "That's how you get things done.", "icon": "🏅", "color": Colors.orange},
+  {"title": "Mission Complete", "msg": "Returning to base for rest.", "icon": "🚁", "color": Colors.deepPurpleAccent},
+];
 
   @override
   void initState() {
@@ -63,168 +87,208 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _triggerCelebration(int updatedStreak) {
-    final random = (List.from(_celebrations)..shuffle()).first;
-    _confettiController.play();
-    HapticFeedback.vibrate();
+  // Select a random celebration theme from your list of 20
+  final random = (List.from(_celebrations)..shuffle()).first;
+  final Color themeColor = random['color'];
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Use the updatedStreak passed from the toggle function
-            if (updatedStreak > 0)
+  _confettiController.play();
+  HapticFeedback.vibrate();
+
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Force them to see their glory!
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. The Streak Badge (Only shows if they have a streak)
+          if (updatedStreak > 1)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: ShapeDecoration(
+                gradient: LinearGradient(colors: [themeColor, themeColor.withOpacity(0.6)]), 
+                shape: const StadiumBorder()
+              ),
+              child: Text(
+                "🔥 $updatedStreak DAY STREAK", 
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1),
+              ),
+            ),
+
+          // 2. The Big Icon with a subtle glow
+          Stack(
+            alignment: Alignment.center,
+            children: [
               Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: const ShapeDecoration(
-                  gradient: LinearGradient(colors: [Colors.orange, Colors.redAccent]), 
-                  shape: StadiumBorder()
+                width: 80, height: 80,
+                decoration: BoxDecoration(
+                  color: themeColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                child: Text("$updatedStreak DAY STREAK!", 
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
               ),
-            Text(random['icon'], style: const TextStyle(fontSize: 60)),
-            const SizedBox(height: 20),
-            Text(random['title'], style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: random['color'])),
-            const SizedBox(height: 12),
-            Text(random['msg'], textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
-            const SizedBox(height: 25),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: random['color'], 
-                  shape: const StadiumBorder(), 
-                  padding: const EdgeInsets.symmetric(vertical: 15)
+              Text(random['icon'], style: const TextStyle(fontSize: 55)),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+
+          // 3. Title & Message
+          Text(
+            random['title'], 
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 26, color: themeColor),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            random['msg'], 
+            textAlign: TextAlign.center, 
+            style: TextStyle(color: Colors.grey[600], fontSize: 16, height: 1.4),
+          ),
+          
+          const SizedBox(height: 30),
+
+          // 4. Action Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                _confettiController.stop();
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeColor, 
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), 
+                padding: const EdgeInsets.symmetric(vertical: 16)
+              ),
+              child: const Text(
+                "Keep it up!", 
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              ),
+            ),
+          )
+        ],
+      ),
+    ),
+  );
+}
+  void _showQuickAddTask(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descController = TextEditingController();
+    final viewModel = context.read<TaskViewModel>();
+
+    HapticFeedback.heavyImpact();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text("Keep the Flame Alive!", 
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
               ),
-            )
-          ],
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const Text("New Task", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    child: Text(DateFormat('MMM dd').format(_selectedDate), 
+                      style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: titleController,
+                autofocus: true,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  hintText: "What needs to be done?",
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  border: InputBorder.none,
+                ),
+              ),
+              TextField(
+                controller: descController,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                decoration: InputDecoration(
+                  hintText: "Add notes (optional)",
+                  hintStyle: TextStyle(color: Colors.grey[300]),
+                  border: InputBorder.none,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Cancel", style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () {
+                      if (titleController.text.isNotEmpty) {
+                        viewModel.addTask(Task(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          title: titleController.text,
+                          description: descController.text,
+                          isCompleted: false,
+                          createdAt: DateTime.now(),
+                          dueDate: _selectedDate,
+                        ));
+                        HapticFeedback.mediumImpact();
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text("Create Task", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-void _showQuickAddTask(BuildContext context) {
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController descController = TextEditingController();
-  final viewModel = context.read<TaskViewModel>();
-
-  HapticFeedback.heavyImpact();
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                const Text("New Task", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Text(DateFormat('MMM dd').format(_selectedDate), 
-                    style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: titleController,
-              autofocus: true,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                hintText: "What needs to be done?",
-                hintStyle: TextStyle(color: Colors.grey[400]),
-                border: InputBorder.none,
-              ),
-            ),
-            TextField(
-              controller: descController,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              decoration: InputDecoration(
-                hintText: "Add notes (optional)",
-                hintStyle: TextStyle(color: Colors.grey[300]),
-                border: InputBorder.none,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Cancel", style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  onPressed: () {
-                    if (titleController.text.isNotEmpty) {
-                      // FIX APPLIED HERE: Added required parameters
-                      viewModel.addTask(Task(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: titleController.text,
-                        description: descController.text,
-                        isCompleted: false,        // Required by your model
-                        createdAt: DateTime.now(), // Required by your model
-                        dueDate: _selectedDate,
-                      ));
-                      HapticFeedback.mediumImpact();
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Create Task", style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Scaffold(
           floatingActionButton: FloatingActionButton(
-  onPressed: () => _showQuickAddTask(context),
-  backgroundColor: Colors.blueAccent,
-  elevation: 4,
-  child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
-),
+            onPressed: () => _showQuickAddTask(context),
+            backgroundColor: Colors.blueAccent,
+            elevation: 4,
+            child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
+          ),
           backgroundColor: const Color(0xFFF8F9FE),
           appBar: AppBar(
             backgroundColor: Colors.white,
@@ -250,7 +314,6 @@ void _showQuickAddTask(BuildContext context) {
               _buildQuickStatsRow(),
               _buildTeamsCalendarHeader(),
               _buildToggleHandle(),
-              // Use NotificationListener to detect scrolling and collapse dashboard
               Expanded(
                 child: NotificationListener<ScrollNotification>(
                   onNotification: (scroll) {
@@ -277,7 +340,6 @@ void _showQuickAddTask(BuildContext context) {
     );
   }
 
-  // --- DASHBOARD WITH GESTURE EXPAND ---
   Widget _buildQuickStatsRow() {
     final viewModel = context.watch<TaskViewModel>();
     final dayTasks = viewModel.tasks.where((t) => isSameDay(t.dueDate, _selectedDate)).toList();
@@ -286,7 +348,6 @@ void _showQuickAddTask(BuildContext context) {
     double progress = dayTasks.isEmpty ? 0 : completedCount / dayTasks.length;
 
     return GestureDetector(
-      // Drag down to expand dashboard
       onVerticalDragUpdate: (details) {
         if (details.delta.dy > 5) setState(() => _isDashboardExpanded = true);
         if (details.delta.dy < -5) setState(() => _isDashboardExpanded = false);
@@ -441,7 +502,6 @@ void _showQuickAddTask(BuildContext context) {
     );
   }
 
-// 2. Animated Glow Progress
   Widget _buildCircularProgress(double progress) {
     bool isDone = progress >= 1.0;
     return TweenAnimationBuilder<double>(
@@ -451,7 +511,7 @@ void _showQuickAddTask(BuildContext context) {
         return Stack(
           alignment: Alignment.center,
           children: [
-            if (isDone) // Background glow when 100%
+            if (isDone)
               Container(
                 width: 30, height: 30,
                 decoration: BoxDecoration(
@@ -479,8 +539,6 @@ void _showQuickAddTask(BuildContext context) {
     );
   }
 
-  // --- CALENDAR WITH GESTURE TO FULL MONTH ---
- // --- CALENDAR HEADER (Now static, no drag here) ---
   Widget _buildTeamsCalendarHeader() {
     final viewModel = context.watch<TaskViewModel>();
     return Container(
@@ -527,19 +585,16 @@ void _showQuickAddTask(BuildContext context) {
     );
   }
 
-  // --- THE TOGGLE HANDLE (DRAG AREA) ---
   Widget _buildToggleHandle() {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque, // Makes the whole bar area draggable
+      behavior: HitTestBehavior.opaque, 
       onVerticalDragUpdate: (details) {
-        // Dragging DOWN expands to Month
         if (details.delta.dy > 5) {
           if (_calendarFormat != CalendarFormat.month) {
             HapticFeedback.lightImpact();
             setState(() => _calendarFormat = CalendarFormat.month);
           }
         } 
-        // Dragging UP collapses to Week
         else if (details.delta.dy < -5) {
           if (_calendarFormat != CalendarFormat.week) {
             HapticFeedback.lightImpact();
@@ -548,7 +603,6 @@ void _showQuickAddTask(BuildContext context) {
         }
       },
       onTap: () {
-        // Optional: Still allow tapping the bar to toggle
         HapticFeedback.selectionClick();
         setState(() => _calendarFormat = _calendarFormat == CalendarFormat.week 
           ? CalendarFormat.month 
@@ -556,7 +610,7 @@ void _showQuickAddTask(BuildContext context) {
       },
       child: Container(
         width: double.infinity, 
-        height: 30, // Slightly taller for easier grabbing
+        height: 30, 
         decoration: BoxDecoration(
           color: Colors.white, 
           borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(25), bottomRight: Radius.circular(25)),
@@ -612,41 +666,38 @@ void _showQuickAddTask(BuildContext context) {
     return Column(children: dailyTasks.map((task) => _buildTeamsTaskCard(task)).toList());
   }
 
-Widget _buildSectionHeader(DateTime date) {
+  Widget _buildSectionHeader(DateTime date) {
     bool isToday = isSameDay(date, DateTime.now());
-    return ClipRRect(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        // This makes the header feel like it's floating over the content
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FE).withOpacity(0.8),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 4, height: 16,
-              decoration: BoxDecoration(
-                color: isToday ? Colors.blueAccent : Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FE).withOpacity(0.8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 4, height: 16,
+            decoration: BoxDecoration(
+              color: isToday ? Colors.blueAccent : Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
             ),
-            const SizedBox(width: 12),
-            Text(
-              isToday ? "TODAY" : DateFormat('EEEE').format(date).toUpperCase(),
-              style: TextStyle(
-                color: isToday ? Colors.blueAccent : Colors.grey[700],
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5
-              )
-            ),
-            const Spacer(),
-            Text(
-              DateFormat('MMM d').format(date),
-              style: TextStyle(color: Colors.grey[400], fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isToday ? "TODAY" : DateFormat('EEEE').format(date).toUpperCase(),
+            style: TextStyle(
+              color: isToday ? Colors.blueAccent : Colors.grey[700],
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5
+            )
+          ),
+          const Spacer(),
+          Text(
+            DateFormat('MMM d').format(date),
+            style: TextStyle(color: Colors.grey[400], fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
@@ -668,16 +719,55 @@ Widget _buildSectionHeader(DateTime date) {
       padding: const EdgeInsets.only(bottom: 12),
       child: Slidable(
         key: ValueKey(task.id),
+        
+        // LEFT SIDE SWIPE (DONE)
         startActionPane: ActionPane(
           motion: const DrawerMotion(),
+          extentRatio: 0.25, // Adjust width of the button
           children: [
-            SlidableAction(onPressed: (context) => _handleToggle(task), backgroundColor: isCompleted ? Colors.orange : Colors.green, icon: isCompleted ? Icons.undo : Icons.check, label: isCompleted ? 'Undo' : 'Done', borderRadius: BorderRadius.circular(15)),
+            SlidableAction(
+              onPressed: (context) => _handleToggle(task),
+              backgroundColor: isCompleted ? Colors.orange : Colors.green,
+              foregroundColor: Colors.white,
+              icon: isCompleted ? Icons.undo : Icons.check,
+              label: isCompleted ? 'Undo' : 'Done',
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
           ],
         ),
+
+        // RIGHT SIDE SWIPE (TOMORROW + DELETE)
         endActionPane: ActionPane(
           motion: const DrawerMotion(),
+          extentRatio: 0.5, // Larger ratio to fit two buttons
           children: [
-            SlidableAction(onPressed: (context) => viewModel.deleteTask(task.id), backgroundColor: Colors.redAccent, icon: Icons.delete_outline, label: 'Delete', borderRadius: BorderRadius.circular(15)),
+            // MOVE TO TOMORROW BUTTON
+            SlidableAction(
+              onPressed: (context) {
+                final nextDay = task.dueDate?.add(const Duration(days: 1)) ?? DateTime.now().add(const Duration(days: 1));
+                viewModel.updateTask(task.copyWith(dueDate: nextDay));
+                HapticFeedback.mediumImpact();
+              },
+              backgroundColor: Colors.amber[600]!,
+              foregroundColor: Colors.white,
+              icon: Icons.auto_awesome_motion_rounded,
+              label: 'Tomorrow',
+            ),
+            // DELETE BUTTON
+            SlidableAction(
+              onPressed: (context) => viewModel.deleteTask(task.id),
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              icon: Icons.delete_outline,
+              label: 'Delete',
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
           ],
         ),
         child: Container(
@@ -693,7 +783,11 @@ Widget _buildSectionHeader(DateTime date) {
                 child: isCompleted ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
               ),
             ),
-            title: Text(task.title, style: TextStyle(fontWeight: FontWeight.w700, color: isCompleted ? Colors.grey : const Color(0xFF2D3142), decoration: isCompleted ? TextDecoration.lineThrough : null)),
+            // THE NEW ANIMATED TITLE
+            title: AnimatedStrikethroughText(
+              text: task.title,
+              isCompleted: isCompleted,
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -713,23 +807,12 @@ Widget _buildSectionHeader(DateTime date) {
     final viewModel = context.read<TaskViewModel>();
     HapticFeedback.mediumImpact();
 
-    // 1. Capture the ID and the CURRENT completion status before toggling
-    final String taskId = task.id;
     final bool wasCompleted = task.isCompleted;
-
-    // 2. Perform the toggle
     viewModel.toggleTaskCompletion(task);
 
-    // 3. We ONLY want to celebrate if the user JUST marked it as 'Done'
-    // If wasCompleted was false, it means it is NOW true.
     if (!wasCompleted) {
-      // We wait for the end of the frame to make sure the ViewModel has finished 
-      // updating all its internal lists.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Get the fresh list of tasks from the viewModel
         final updatedTasks = viewModel.tasks.where((t) => isSameDay(t.dueDate, _selectedDate)).toList();
-        
-        // Check if there are tasks and if EVERY SINGLE ONE is now completed
         bool isDayPerfect = updatedTasks.isNotEmpty && updatedTasks.every((t) => t.isCompleted);
 
         if (isDayPerfect) {
@@ -738,5 +821,45 @@ Widget _buildSectionHeader(DateTime date) {
         }
       });
     }
+  }
+}
+
+// 3. THE "PREMIUM" STRIKETHROUGH WIDGET
+class AnimatedStrikethroughText extends StatelessWidget {
+  final String text;
+  final bool isCompleted;
+
+  const AnimatedStrikethroughText({
+    Key? key,
+    required this.text,
+    required this.isCompleted,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: isCompleted ? Colors.grey[400] : const Color(0xFF2D3142),
+          ),
+        ),
+        // This draws the line across the text
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+              width: isCompleted ? 1000 : 0, // Slides across the whole width
+              height: 1.5,
+              color: Colors.grey[400],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
