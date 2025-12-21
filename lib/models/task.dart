@@ -13,6 +13,7 @@ class Task {
     required this.isCompleted,
     required this.createdAt,
     this.dueDate,
+    
   });
 
   /// Create Task from Firestore document

@@ -73,25 +73,23 @@ class TaskViewModel extends ChangeNotifier {
   }
 
   /// Mark task as completed with notification
-  Future<void> completeTask(Task task) async {
-    final completedTask = Task(
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      isCompleted: true,
-      createdAt: task.createdAt,
-      dueDate: task.dueDate,
-    );
+/// Toggle completion status (Complete/Undo)
+  Future<void> toggleTaskCompletion(Task task) async {
+    final newStatus = !task.isCompleted;
+    
+    await _db.collection('tasks').doc(task.id).update({
+      'isCompleted': newStatus,
+    });
 
-    await _db.collection('tasks').doc(task.id).update(completedTask.toMap());
+    if (newStatus) {
+      // Send notification only when marking as completed
+      await _notificationViewModel.sendTaskCompletedNotification(task);
+      // Cancel scheduled notifications
+      await NotificationService().cancelNotification(task.id.hashCode);
+      await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
+    }
 
-    // Send completion notification
-    await _notificationViewModel.sendTaskCompletedNotification(completedTask);
-
-    // Cancel scheduled notifications
-    await NotificationService().cancelNotification(task.id.hashCode);
-    await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
-
+    // Refresh the local list
     await fetchTasks();
   }
 
