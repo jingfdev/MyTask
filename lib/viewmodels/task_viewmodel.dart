@@ -76,7 +76,7 @@ class TaskViewModel extends ChangeNotifier {
 /// Toggle completion status (Complete/Undo)
   Future<void> toggleTaskCompletion(Task task) async {
     final newStatus = !task.isCompleted;
-    
+
     await _db.collection('tasks').doc(task.id).update({
       'isCompleted': newStatus,
     });
@@ -94,20 +94,16 @@ class TaskViewModel extends ChangeNotifier {
   }
 
   /// Get tasks for a specific date (Calendar)
-  Future<List<Task>> getTasksByDate(DateTime date) async {
+Future<List<Task>> getTasksByDate(DateTime date) async {
+    // Start of the selected day
     final start = DateTime(date.year, date.month, date.day);
+    // End of the selected day (Start of next day)
     final end = start.add(const Duration(days: 1));
 
     final snapshot = await _db
         .collection('tasks')
-        .where(
-      'dueDate',
-      isGreaterThanOrEqualTo: start.toIso8601String(),
-    )
-        .where(
-      'dueDate',
-      isLessThan: end.toIso8601String(),
-    )
+        .where('dueDate', isGreaterThanOrEqualTo: start.toIso8601String())
+        .where('dueDate', isLessThan: end.toIso8601String())
         .get();
 
     return snapshot.docs
