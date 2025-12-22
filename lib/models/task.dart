@@ -15,10 +15,27 @@ class Task {
     this.dueDate,
   });
 
-  /// Create Task from Firestore document
+  // Helper method for updating tasks in the ViewModel
+  Task copyWith({
+    String? id,
+    String? title,
+    String? description,
+    bool? isCompleted,
+    DateTime? createdAt,
+    DateTime? dueDate,
+  }) {
+    return Task(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      isCompleted: isCompleted ?? this.isCompleted,
+      createdAt: createdAt ?? this.createdAt,
+      dueDate: dueDate ?? this.dueDate,
+    );
+  }
+
   factory Task.fromMap(Map<String, dynamic> data, String id) {
     DateTime? parsedDueDate;
-
     final rawDueDate = data['dueDate'];
     if (rawDueDate is String && rawDueDate.isNotEmpty) {
       parsedDueDate = DateTime.tryParse(rawDueDate);
@@ -34,7 +51,6 @@ class Task {
     );
   }
 
-  /// Convert Task to Firestore map
   Map<String, dynamic> toMap() {
     return {
       'title': title,
