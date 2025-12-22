@@ -44,10 +44,17 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings =
+    /// 🔥 Linux initialization -- REQUIRED on Linux!
+    final LinuxInitializationSettings initializationSettingsLinux =
+        const LinuxInitializationSettings(
+      defaultActionName: 'open',
+    );
+
+    final InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
+      linux: initializationSettingsLinux,   // ✅ Add this line
     );
 
     await flutterLocalNotificationsPlugin.initialize(
@@ -170,6 +177,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
+<<<<<<< HEAD
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
@@ -178,6 +186,19 @@ class NotificationService {
     } catch (e) {
       print('❌ Error scheduling notification: $e');
     }
+=======
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+        linux: LinuxNotificationDetails(), // optional but safe
+      ),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+>>>>>>> origin/chesda
   }
 
   /// Cancel a notification
@@ -229,6 +250,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
+<<<<<<< HEAD
         payload: payload != null ? payload.toString() : null,
       );
       print('✅ Instant notification shown: $title');
@@ -241,5 +263,15 @@ class NotificationService {
   void dispose() {
     _notificationTapStream.close();
     _messageReceivedStream.close();
+=======
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+        linux: LinuxNotificationDetails(), // optional
+      ),
+    );
+>>>>>>> origin/chesda
   }
 }
