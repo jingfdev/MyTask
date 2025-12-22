@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'firebase_options.dart';
 
@@ -19,35 +21,49 @@ import 'package:mytask_project/views/screens/settings_page.dart';
 import 'package:mytask_project/views/screens/main_navigation_wrapper.dart';
 import 'package:mytask_project/views/screens/notifications_screen.dart';
 
+/// Global navigator key for handling notification navigation
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 /// Background message handler for Firebase Cloud Messaging
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('📬 Handling background message: ${message.messageId}');
-
-  // Show notification even in background
-  if (message.notification != null) {
-    await NotificationService().showInstantNotification(
-      title: message.notification!.title ?? 'New Notification',
-      body: message.notification!.body ?? '',
-      payload: message.data,
-    );
-  }
-}
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // ✅ Initialize Firebase
+  // Initialize Firebase for background handler
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // ✅ Initialize notifications
-  await NotificationService().initialize();
+  print('Handling background message: ${message.messageId}');
+  // Background messages are handled by the system, just log them
+}
 
-  // ✅ Set up background message handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+void main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const MyApp());
+    // Initialize timezone database
+    tz.initializeTimeZones();
+
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Set navigator key before initializing NotificationService
+    NotificationService().setNavigatorKey(navigatorKey);
+
+    // Initialize notifications
+    await NotificationService().initialize();
+
+    // Set up background message handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    runApp(const MyApp());
+  } catch (e, stackTrace) {
+    print('❌ Error in main: $e');
+    print('Stack trace: $stackTrace');
+    // Run app anyway without notifications
+    runApp(const MyApp());
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -61,37 +77,54 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TaskViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
       ],
-      child: MaterialApp(
-        title: 'TaskMaster',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            centerTitle: false,
-          ),
-        ),
-        home: WelcomeScreen(),
-        routes: {
-          '/welcome': (_) => WelcomeScreen(),
-          '/onboarding': (_) => OnboardingScreen(),
-          '/home': (_) => MainNavigationWrapper(),
-          '/tasks': (_) => TaskListScreen(),
-          '/add-task': (_) => TaskFormPage(),
-          '/calendar': (_) => CalendarScreen(),
-          '/settings': (_) => SettingsPage(),
-          '/notifications': (_) => NotificationsScreen(),
-        },
-        onGenerateRoute: (settings) {
-          if (settings.name == '/edit-task') {
-            final task = settings.arguments as Task;
-            return MaterialPageRoute(
-              builder: (context) => TaskFormPage(task: task),
-            );
-          }
-          return null;
+      child: Builder(
+        builder: (context) {
+          // Register token callback after providers are ready
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              final userVm = Provider.of<UserViewModel>(context, listen: false);
+              NotificationService().onTokenGenerated = (token) {
+                userVm.saveFcmToken(token);
+              };
+            } catch (e) {
+              print('❌ Error registering token callback: $e');
+            }
+          });
+
+          return MaterialApp(
+            navigatorKey: navigatorKey,
+            title: 'TaskMaster',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                centerTitle: false,
+              ),
+            ),
+            home: WelcomeScreen(),
+            routes: {
+              '/welcome': (_) => WelcomeScreen(),
+              '/onboarding': (_) => OnboardingScreen(),
+              '/home': (_) => MainNavigationWrapper(),
+              '/tasks': (_) => TaskListScreen(),
+              '/add-task': (_) => TaskFormPage(),
+              '/calendar': (_) => CalendarScreen(),
+              '/settings': (_) => SettingsPage(),
+              '/notifications': (_) => NotificationsScreen(),
+            },
+            onGenerateRoute: (settings) {
+              if (settings.name == '/edit-task') {
+                final task = settings.arguments as Task;
+                return MaterialPageRoute(
+                  builder: (context) => TaskFormPage(task: task),
+                );
+              }
+              return null;
+            },
+          );
         },
       ),
     );
