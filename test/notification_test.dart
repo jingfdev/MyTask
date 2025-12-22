@@ -76,16 +76,18 @@ void main() {
         NotificationType.taskAssigned,
         NotificationType.taskUpdated,
         NotificationType.taskDeadlineApproaching,
+        NotificationType.taskReminder, // ADDED: New reminder type
         NotificationType.info,
       ];
 
-      expect(types.length, 7);
+      expect(types.length, 8); // Updated from 7 to 8
     });
 
     test('NotificationType.name returns correct enum name', () {
       expect(NotificationType.taskCreated.name, 'taskCreated');
       expect(NotificationType.taskDueReminder.name, 'taskDueReminder');
       expect(NotificationType.taskCompleted.name, 'taskCompleted');
+      expect(NotificationType.taskReminder.name, 'taskReminder'); // ADDED
     });
   });
 
@@ -156,26 +158,53 @@ void main() {
     });
 
     test('Deadline approaching notification is not scheduled if due date is in past',
-        () async {
-      final pastDate = DateTime.now().subtract(Duration(days: 1));
+            () async {
+          final pastDate = DateTime.now().subtract(Duration(days: 1));
+          final task = Task(
+            id: 'task_1',
+            title: 'Past Task',
+            description: 'Already due',
+            isCompleted: false,
+            createdAt: DateTime.now(),
+            dueDate: pastDate,
+            reminderTime: null,
+            reminderType: null,
+            hasReminder: false,
+          );
+
+          // Should not throw error, just skip scheduling
+          await viewModel.scheduleTaskDeadlineNotification(task); // FIXED: Changed method name
+        });
+
+    test('Reminder notification methods exist', () {
+      // Test that the new methods are available
       final task = Task(
         id: 'task_1',
-        title: 'Past Task',
-        description: 'Already due',
+        title: 'Test Task',
+        description: 'Test',
         isCompleted: false,
         createdAt: DateTime.now(),
-        dueDate: pastDate,
+        dueDate: DateTime.now().add(Duration(days: 1)),
+        reminderTime: null,
+        reminderType: null,
+        hasReminder: false,
       );
 
-      // Should not throw error, just skip scheduling
-      await viewModel.sendDeadlineApproachingNotification(task);
+      // These methods should exist (testing by calling them with a task that won't schedule)
+      expect(() => viewModel.scheduleTaskDeadlineNotification(task), returnsNormally);
+      expect(() => viewModel.scheduleTaskDueReminder(task), returnsNormally);
+      expect(() => viewModel.scheduleTaskReminderNotification(task), returnsNormally);
     });
 
     test('Notification types match expected values', () {
-      expect(NotificationType.values.length, 7);
+      expect(NotificationType.values.length, 8); // Updated from 7 to 8
       expect(
         NotificationType.values,
         contains(NotificationType.taskDeadlineApproaching),
+      );
+      expect(
+        NotificationType.values,
+        contains(NotificationType.taskReminder), // ADDED: Check for new type
       );
     });
   });
@@ -238,6 +267,13 @@ void main() {
           type: NotificationType.taskUpdated,
           createdAt: DateTime.now(),
         ),
+        AppNotification(
+          id: '4',
+          title: 'Reminder',
+          body: 'Body',
+          type: NotificationType.taskReminder, // ADDED: New reminder type
+          createdAt: DateTime.now(),
+        ),
       ];
 
       final completedNotifications = notifications
@@ -246,7 +282,52 @@ void main() {
 
       expect(completedNotifications.length, 1);
       expect(completedNotifications[0].id, '2');
+
+      final reminderNotifications = notifications
+          .where((n) => n.type == NotificationType.taskReminder) // NEW TEST
+          .toList();
+
+      expect(reminderNotifications.length, 1);
+      expect(reminderNotifications[0].id, '4');
+    });
+  });
+
+  group('Task with Reminders', () {
+    test('Task model includes reminder fields', () {
+      final task = Task(
+        id: 'task_1',
+        title: 'Task with Reminder',
+        description: 'Test',
+        isCompleted: false,
+        createdAt: DateTime.now(),
+        dueDate: DateTime.now().add(Duration(days: 1)),
+        reminderTime: DateTime.now().add(Duration(hours: 12)),
+        reminderType: ReminderTime.oneHour,
+        hasReminder: true,
+      );
+
+      expect(task.hasReminder, true);
+      expect(task.reminderTime, isNotNull);
+      expect(task.reminderType, ReminderTime.oneHour);
+    });
+
+    test('Task without reminders has correct defaults', () {
+      final task = Task(
+        id: 'task_2',
+        title: 'Task without Reminder',
+        description: 'Test',
+        isCompleted: false,
+        createdAt: DateTime.now(),
+        dueDate: null,
+        reminderTime: null,
+        reminderType: null,
+        hasReminder: false,
+      );
+
+      expect(task.hasReminder, false);
+      expect(task.reminderTime, isNull);
+      expect(task.reminderType, isNull);
+      expect(task.dueDate, isNull);
     });
   });
 }
-

@@ -27,7 +27,7 @@ class AppNotification {
       body: data['body'] ?? '',
       taskId: data['taskId'],
       type: NotificationType.values.firstWhere(
-        (e) => e.name == (data['type'] ?? 'info'),
+            (e) => e.name == (data['type'] ?? 'info'),
         orElse: () => NotificationType.info,
       ),
       createdAt: DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
@@ -80,6 +80,6 @@ enum NotificationType {
   taskAssigned,
   taskUpdated,
   taskDeadlineApproaching,
+  taskReminder,  // ADDED: For custom reminders
   info,
 }
-

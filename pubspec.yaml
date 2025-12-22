@@ -11,25 +11,37 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # UI & State
   cupertino_icons: ^1.0.8
   provider: ^6.1.0
-  google_sign_in: ^6.2.1
-  flutter_local_notifications: ^17.1.0
-  firebase_messaging: ^15.2.0
-  timezone: ^0.9.2
+  flutter_slidable: ^4.0.3
   table_calendar: ^3.1.2
+  confetti: ^0.8.0
+
+  # Utilities
   intl: ^0.19.0
   uuid: ^4.0.0
-  mockito: ^5.4.4
+  timezone: ^0.9.2
 
+  # Firebase
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
+  firebase_messaging: ^15.2.0
+
+  # Auth & Notifications
+  google_sign_in: ^6.2.1
+  flutter_local_notifications: ^17.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.6
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/sounds/

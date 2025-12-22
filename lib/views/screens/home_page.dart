@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/views/widgets/task_card.dart';
+import 'package:mytask_project/views/screens/task_form_page.dart'; // 👈 adjust if needed
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -49,9 +50,23 @@ class _HomePageState extends State<HomePage> {
     }).toList();
   }
 
+  // ✅ SAME BEHAVIOR AS CALENDAR PAGE
+  void _openTaskBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return const TaskFormPage(); // 👈 same widget used in Calendar
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -62,31 +77,38 @@ class _HomePageState extends State<HomePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: Colors.blue[600], size: 28),
-            onPressed: () {
-              Navigator.of(context).pushNamed('/add-task');
-            },
-          ),
-        ],
       ),
+
+      // ➕ MODERN FAB
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        elevation: 6,
+        backgroundColor: Colors.blue[600],
+        shape: const CircleBorder(),
+        onPressed: _openTaskBottomSheet, // ✅ UPDATED
+        child: const Icon(
+          Icons.add,
+          size: 32,
+          color: Colors.white,
+        ),
+      ),
+
       body: Column(
         children: [
-          // Tabs
+          // 🔹 TABS
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 _buildTab('Today', 0),
-                const SizedBox(width: 16),
+                const SizedBox(width: 24),
                 _buildTab('Upcoming', 1),
               ],
             ),
           ),
 
-          // Task List
+          // 📋 TASK LIST
           Expanded(
             child: Consumer<TaskViewModel>(
               builder: (context, viewModel, _) {
@@ -104,7 +126,11 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.inbox, size: 60, color: Colors.grey[300]),
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 72,
+                          color: Colors.grey[300],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           _selectedTab == 0
@@ -121,7 +147,8 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding:
+                  const EdgeInsets.fromLTRB(16, 16, 16, 100),
                   itemCount: displayTasks.length,
                   itemBuilder: (context, index) {
                     final task = displayTasks[index];
@@ -144,24 +171,26 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = index),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: isActive ? Colors.blue[600] : Colors.grey[500],
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontWeight:
+              isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
-          if (isActive)
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              height: 3,
-              width: 30,
-              decoration: BoxDecoration(
-                color: Colors.blue[600],
-                borderRadius: BorderRadius.circular(2),
-              ),
+          const SizedBox(height: 6),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 3,
+            width: isActive ? 28 : 0,
+            decoration: BoxDecoration(
+              color: Colors.blue[600],
+              borderRadius: BorderRadius.circular(2),
             ),
+          ),
         ],
       ),
     );

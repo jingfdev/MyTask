@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:mytask_project/services/notification_service.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mytask_project/viewmodels/notification_viewmodel.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/views/widgets/notification_badge.dart';
 import 'package:mytask_project/models/task.dart';
+
+import 'models/notification.dart';
 
 /// Example Integration Guide - Copy code snippets into your screens
 
@@ -34,10 +37,10 @@ class ExampleIntegration {
 
   /// EXAMPLE 3: Trigger manual notification
   static Future<void> exampleManualNotification(
-    BuildContext context,
-  ) async {
+      BuildContext context,
+      ) async {
     final viewModel = context.read<NotificationViewModel>();
-    
+
     await viewModel.createNotification(
       title: 'Custom Notification',
       body: 'This is a manual notification',
@@ -52,8 +55,8 @@ class ExampleIntegration {
 
   /// EXAMPLE 4: Create task with automatic notifications
   static Future<void> exampleCreateTaskWithNotifications(
-    BuildContext context,
-  ) async {
+      BuildContext context,
+      ) async {
     final taskViewModel = context.read<TaskViewModel>();
 
     final task = Task(
@@ -114,18 +117,18 @@ class ExampleIntegration {
 
   /// EXAMPLE 7: Mark notification as read
   static Future<void> exampleMarkAsRead(
-    BuildContext context,
-    String notificationId,
-  ) async {
+      BuildContext context,
+      String notificationId,
+      ) async {
     final viewModel = context.read<NotificationViewModel>();
     await viewModel.markAsRead(notificationId);
   }
 
   /// EXAMPLE 8: Delete notification
   static Future<void> exampleDeleteNotification(
-    BuildContext context,
-    String notificationId,
-  ) async {
+      BuildContext context,
+      String notificationId,
+      ) async {
     final viewModel = context.read<NotificationViewModel>();
     await viewModel.deleteNotification(notificationId);
   }
@@ -135,7 +138,7 @@ class ExampleIntegration {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // This example shows how to handle notification taps
       // You might want to do this in a stateful widget's initState()
-      
+
       // For FCM messages, listen in your main.dart or a service
       // NotificationService().notificationTapStream.listen((notification) {
       //   if (notification['type'] == 'local') {
@@ -156,9 +159,9 @@ class ExampleIntegration {
 
   /// EXAMPLE 11: Complete a task (sends completion notification)
   static Future<void> exampleCompleteTask(
-    BuildContext context,
-    Task task,
-  ) async {
+      BuildContext context,
+      Task task,
+      ) async {
     final viewModel = context.read<TaskViewModel>();
 
     // This sends "Task Completed" notification automatically
@@ -172,9 +175,9 @@ class ExampleIntegration {
 
   /// EXAMPLE 12: Update task (resend deadline notifications if date changed)
   static Future<void> exampleUpdateTask(
-    BuildContext context,
-    Task task,
-  ) async {
+      BuildContext context,
+      Task task,
+      ) async {
     final viewModel = context.read<TaskViewModel>();
 
     final updatedTask = Task(
@@ -198,9 +201,9 @@ class ExampleIntegration {
 
   /// EXAMPLE 13: Get notifications for a specific task
   static void exampleGetTaskNotifications(
-    BuildContext context,
-    String taskId,
-  ) {
+      BuildContext context,
+      String taskId,
+      ) {
     final viewModel = context.read<NotificationViewModel>();
     final taskNotifications = viewModel.getNotificationsByTask(taskId);
 
@@ -224,8 +227,8 @@ class ExampleIntegration {
 
   /// EXAMPLE 15: Test notifications locally
   static Future<void> exampleTestNotifications(
-    BuildContext context,
-  ) async {
+      BuildContext context,
+      ) async {
     final service = NotificationService();
 
     // Show instant notification
