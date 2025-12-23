@@ -30,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
                 SizedBox(height: 30),
                 // Title
                 Text(
-                  'TaskMaster',
+                  'MyTasks',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,

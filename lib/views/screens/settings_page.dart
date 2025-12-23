@@ -266,31 +266,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     onTap: () {},
                     index: 9,
                   ),
-
-                  const SizedBox(height: 32),
-
-                  // App Info
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        Text(
-                          'TaskMaster v1.0.0',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Made with ❤️ for productivity',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                   const SizedBox(height: 32),
                 ],
               ),
