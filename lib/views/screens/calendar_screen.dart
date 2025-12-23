@@ -355,7 +355,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         curve: Curves.fastOutSlowIn,
-        height: _isDashboardExpanded ? 220 : 90,
+        height: _isDashboardExpanded ? 240 : 90,
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         decoration: const BoxDecoration(color: Colors.white),
@@ -400,86 +400,161 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildFullDashboard(int total, int done, int streak, double progress) {
-    return Column(
-      key: const ValueKey("full"),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.bolt_rounded, size: 20, color: Colors.orange[700]),
-                const SizedBox(width: 6),
-                const Text("PERFORMANCE", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.black87)),
-              ],
-            ),
-            const Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 20),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              flex: 11,
-              child: Container(
-                height: 125,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [Colors.blue[900]!, Colors.blue[600]!]),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+Widget _buildFullDashboard(int total, int done, int streak, double progress) {
+  return Column(
+    key: const ValueKey("full"),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Header Row
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bolt_rounded, size: 20, color: Colors.orange[700]),
+              const SizedBox(width: 6),
+              const Text("PERFORMANCE", 
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.black87)),
+            ],
+          ),
+          const Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 20),
+        ],
+      ),
+      const SizedBox(height: 12), // Increased spacing
+      
+      // Main Content Row
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // BLUE BOX: Spans Col 1 & 2 across both rows
+          Expanded(
+            flex: 2, // Takes up 2/3 of the width
+            child: Container(
+              height: 140, // Explicit height to match the stack on the right
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.blue[900]!, Colors.blue[600]!],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Today's Score", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
-                    Text("${(progress * 100).toInt()}%", style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900)),
-                    const Spacer(),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(value: progress, backgroundColor: Colors.white24, color: Colors.white, minHeight: 8),
-                    ),
-                  ],
-                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  )
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 9,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildDashCard("Streak", "$streak Days", Colors.orange, Icons.local_fire_department_rounded),
-                  const SizedBox(height: 10),
-                  _buildDashCard("Goal", "$done/$total", Colors.green, Icons.track_changes_rounded),
+                  const Text("Today's Score", 
+                    style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text("${(progress * 100).toInt()}%", 
+                    style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900)),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: progress, 
+                      backgroundColor: Colors.white24, 
+                      color: Colors.white, 
+                      minHeight: 10,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDashCard(String label, String val, Color color, IconData icon) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(18), border: Border.all(color: color.withOpacity(0.12), width: 1.5)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(height: 2),
-          Text(val, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16)),
-          Text(label.toUpperCase(), style: TextStyle(color: color.withOpacity(0.6), fontSize: 8, fontWeight: FontWeight.w900)),
+          ),
+          
+          const SizedBox(width: 12), // Gap between Blue and the stack
+          
+          // RIGHT SIDE: Stacked Streak and Goal
+          Expanded(
+            flex: 1, // Takes up 1/3 of the width
+            child: SizedBox(
+              height: 135, // Must match the blue box height exactly
+              child: Column(
+                children: [
+                  // YELLOW BOX (Row 1, Col 3)
+                  Expanded(
+                    child: _buildDashCard(
+                      "Streak", 
+                      "$streak Days", 
+                      Colors.orange, 
+                      Icons.local_fire_department_rounded
+                    ),
+                  ),
+                  const SizedBox(height: 10), // Gap between yellow and green
+                  // GREEN BOX (Row 2, Col 3)
+                  Expanded(
+                    child: _buildDashCard(
+                      "Goal", 
+                      "$done/$total", 
+                      Colors.green, 
+                      Icons.track_changes_rounded
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
+    ],
+  );
+}
 
+Widget _buildDashCard(String label, String val, Color color, IconData icon) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: color.withOpacity(0.12), width: 1),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 12, color: color), // Smaller icon
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  color: color.withOpacity(0.6),
+                  fontSize: 7, // Smaller font
+                  fontWeight: FontWeight.w900,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        // FittedBox prevents the "Overflow" by scaling the text down
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            val,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 15, // Slightly smaller base font
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildStatItem(String label, String value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
