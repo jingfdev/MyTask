@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
 class NotificationService {
@@ -11,19 +13,13 @@ class NotificationService {
   late FirebaseMessaging firebaseMessaging;
   GlobalKey<NavigatorState>? _navigatorKey;
 
-  // Stream controllers for notification events
   final StreamController<Map<String, dynamic>> _notificationTapStream =
-      StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<RemoteMessage> _messageReceivedStream =
-      StreamController<RemoteMessage>.broadcast();
+  StreamController<RemoteMessage>.broadcast();
 
-  // Channel constants
-  static const String _channelId = 'taskmaster_channel';
   static const String _channelName = 'TaskMaster Notifications';
   static const String _channelDescription = 'Notifications for task reminders and updates';
-
-  // Optional callback to persist token to backend
-  void Function(String token)? onTokenGenerated;
 
   factory NotificationService() {
     return _instance;
@@ -34,38 +30,39 @@ class NotificationService {
     firebaseMessaging = FirebaseMessaging.instance;
   }
 
-  /// Set navigator key for handling notification navigation
+  Future<String> _getDynamicChannelId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool sound = prefs.getBool('reminder_sound') ?? true;
+    final bool vib = prefs.getBool('reminder_vibration') ?? true;
+    return 'taskmaster_channel_s${sound ? 1 : 0}_v${vib ? 1 : 0}';
+  }
+
+  void Function(String token)? onTokenGenerated;
+
+  Future<void> updateNotificationSettings() async {
+    await _createNotificationChannel();
+  }
+
   void setNavigatorKey(GlobalKey<NavigatorState> key) {
     _navigatorKey = key;
   }
 
-  /// Get stream for notification taps
-  Stream<Map<String, dynamic>> get notificationTapStream =>
-      _notificationTapStream.stream;
+  Stream<Map<String, dynamic>> get notificationTapStream => _notificationTapStream.stream;
+  Stream<RemoteMessage> get messageReceivedStream => _messageReceivedStream.stream;
 
-  /// Get stream for incoming FCM messages
-  Stream<RemoteMessage> get messageReceivedStream =>
-      _messageReceivedStream.stream;
-
-  /// Initialize both local and push notifications
   Future<void> initialize() async {
     try {
-      // Request notification permissions first
-      await _requestPermissions();
-
-      // Initialize local notifications
       const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
       const DarwinInitializationSettings initializationSettingsIOS =
-          DarwinInitializationSettings(
+      DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
         requestSoundPermission: false,
       );
 
-      const InitializationSettings initializationSettings =
-          InitializationSettings(
+      const InitializationSettings initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid,
         iOS: initializationSettingsIOS,
       );
@@ -75,13 +72,10 @@ class NotificationService {
         onDidReceiveNotificationResponse: _onNotificationTap,
       );
 
-      // Create Android notification channel
+      await _requestPermissions();
       await _createNotificationChannel();
-
-      // Initialize Firebase Cloud Messaging
       await _initializeFirebaseMessaging();
 
-      // Handle initial message when app launched from terminated state
       final initialMessage = await firebaseMessaging.getInitialMessage();
       if (initialMessage != null) {
         _handleNotificationNavigation(
@@ -90,32 +84,47 @@ class NotificationService {
       }
 
       print('✅ NotificationService initialized successfully');
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('❌ Error initializing NotificationService: $e');
-      print('Stack trace: $stackTrace');
     }
   }
 
-  /// Request notification permissions
   Future<void> _requestPermissions() async {
-    // Request permissions via FCM (works for both iOS and Android)
     await firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
-      provisional: false,
     );
+
+    if (Platform.isAndroid) {
+      final androidPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+      // Request standard Notification Permission (Android 13+)
+      await androidPlugin?.requestNotificationsPermission();
+
+      // Check and request Exact Alarm Permission (Android 12+)
+      final bool? isAllowed = await androidPlugin?.canScheduleExactNotifications();
+      if (isAllowed == false) {
+        await androidPlugin?.requestExactAlarmsPermission();
+      }
+    }
   }
 
-  /// Create Android notification channel
   Future<void> _createNotificationChannel() async {
-    const androidChannel = AndroidNotificationChannel(
-      _channelId,
+    final prefs = await SharedPreferences.getInstance();
+    final bool playSound = prefs.getBool('reminder_sound') ?? true;
+    final bool enableVib = prefs.getBool('reminder_vibration') ?? true;
+    final String dynamicId = await _getDynamicChannelId();
+
+    final androidChannel = AndroidNotificationChannel(
+      dynamicId,
       _channelName,
       description: _channelDescription,
       importance: Importance.high,
-      playSound: true,
-      enableVibration: true,
+      playSound: playSound,
+      enableVibration: enableVib,
+      sound: playSound ? null : const RawResourceAndroidNotificationSound(''),
       enableLights: true,
     );
 
@@ -124,62 +133,19 @@ class NotificationService {
         ?.createNotificationChannel(androidChannel);
   }
 
-  /// Initialize Firebase Cloud Messaging
   Future<void> _initializeFirebaseMessaging() async {
-    // Request notification permissions
-    NotificationSettings settings =
-        await firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: true,
-      badge: true,
-      provisional: false,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('✅ Notification permissions granted');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      print('⚠️ Notification permissions provisional');
-    } else {
-      print('❌ Notification permissions denied');
-    }
-
-    // Get FCM token
     String? token = await firebaseMessaging.getToken();
-    if (token != null) {
-      print('🔑 FCM Token: $token');
-      if (onTokenGenerated != null) {
-        onTokenGenerated!(token);
-      }
-    }
+    if (token != null && onTokenGenerated != null) onTokenGenerated!(token);
 
-    // Listen for token refresh
     firebaseMessaging.onTokenRefresh.listen((newToken) {
-      print('🔄 FCM Token refreshed: $newToken');
-      if (onTokenGenerated != null) {
-        onTokenGenerated!(newToken);
-      }
+      if (onTokenGenerated != null) onTokenGenerated!(newToken);
     });
 
-    // Listen to foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // Listen to background message opened (app in background)
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
   }
 
-  /// Get FCM token
-  Future<String?> getFCMToken() async {
-    return await firebaseMessaging.getToken();
-  }
-
-  /// Handle foreground message
   void _handleForegroundMessage(RemoteMessage message) {
-    print('📬 Foreground message received: ${message.messageId}');
-    _messageReceivedStream.add(message);
-
-    // Show notification if app is in foreground
     if (message.notification != null) {
       showInstantNotification(
         title: message.notification!.title ?? 'New Notification',
@@ -189,68 +155,31 @@ class NotificationService {
     }
   }
 
-  /// Handle message opened app
   void _handleMessageOpenedApp(RemoteMessage message) {
-    print('🔔 Message opened from background: ${message.messageId}');
     _notificationTapStream.add({
       'type': 'fcm',
       'data': message.data,
-      'notification': message.notification,
     });
   }
 
-  /// Request notification permissions (iOS)
-  Future<bool?> requestPermissions() async {
-    return await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
-  }
-
-  /// Handle local notification tap
   void _onNotificationTap(NotificationResponse response) {
-    print('📱 Local notification tapped: ${response.id}');
-    _notificationTapStream.add({
-      'type': 'local',
-      'id': response.id,
-      'payload': response.payload,
-    });
     _handleNotificationNavigation(response.payload);
   }
 
-  /// Handle notification navigation
   void _handleNotificationNavigation(String? payloadStr) {
     if (_navigatorKey == null || payloadStr == null) return;
-
     try {
       final Map<String, dynamic> data = jsonDecode(payloadStr);
-
-      // Navigate based on payload data
       if (data.containsKey('route')) {
-        final route = data['route'] as String;
-        _navigatorKey!.currentState?.pushNamed(route, arguments: data);
+        _navigatorKey!.currentState?.pushNamed(data['route'] as String, arguments: data);
       } else if (data.containsKey('taskId')) {
-        // Default to tasks screen if taskId is present
         _navigatorKey!.currentState?.pushNamed('/tasks', arguments: data);
-      } else if (data.containsKey('type')) {
-        // Handle different notification types
-        switch (data['type']) {
-          case 'task_reminder':
-            _navigatorKey!.currentState?.pushNamed('/tasks', arguments: data);
-            break;
-          case 'task_assigned':
-            _navigatorKey!.currentState?.pushNamed('/notifications', arguments: data);
-            break;
-          default:
-            _navigatorKey!.currentState?.pushNamed('/notifications');
-        }
       }
     } catch (e) {
-      print('❌ Error parsing notification payload: $e');
+      print('❌ Navigation error: $e');
     }
   }
 
-  /// Schedule a notification
   Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -259,6 +188,30 @@ class NotificationService {
     String? payload,
   }) async {
     try {
+      // 1. Check if the time is in the past
+      if (scheduledTime.isBefore(DateTime.now())) {
+        print('⚠️ Cannot schedule notification in the past');
+        return;
+      }
+
+      // 2. Android 12+ Safety Check for Exact Alarms
+      if (Platform.isAndroid) {
+        final androidPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+        final bool? canSchedule = await androidPlugin?.canScheduleExactNotifications();
+        if (canSchedule == false) {
+          print('⚠️ Exact alarms not permitted. Redirecting to settings.');
+          await androidPlugin?.requestExactAlarmsPermission();
+          return; // Stop here; the user needs to grant permission first
+        }
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final bool sound = prefs.getBool('reminder_sound') ?? true;
+      final bool vib = prefs.getBool('reminder_vibration') ?? true;
+      final String dynamicId = await _getDynamicChannelId();
+
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
@@ -266,52 +219,28 @@ class NotificationService {
         tz.TZDateTime.from(scheduledTime, tz.local),
         NotificationDetails(
           android: AndroidNotificationDetails(
-            _channelId,
+            dynamicId,
             _channelName,
             channelDescription: _channelDescription,
             importance: Importance.max,
             priority: Priority.high,
-            enableVibration: true,
-            enableLights: true,
-            playSound: true,
+            icon: '@mipmap/ic_launcher',
+            enableVibration: vib,
+            playSound: sound,
           ),
-          iOS: const DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
+          iOS: const DarwinNotificationDetails(),
         ),
         uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+        UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
-      print('✅ Notification scheduled: $id - $title');
+      print('✅ Scheduled successfully for $scheduledTime');
     } catch (e) {
       print('❌ Error scheduling notification: $e');
     }
   }
 
-  /// Cancel a notification
-  Future<void> cancelNotification(int id) async {
-    try {
-      await flutterLocalNotificationsPlugin.cancel(id);
-      print('✅ Notification cancelled: $id');
-    } catch (e) {
-      print('❌ Error cancelling notification: $e');
-    }
-  }
-
-  /// Cancel all notifications
-  Future<void> cancelAllNotifications() async {
-    try {
-      await flutterLocalNotificationsPlugin.cancelAll();
-      print('✅ All notifications cancelled');
-    } catch (e) {
-      print('❌ Error cancelling all notifications: $e');
-    }
-  }
-
-  /// Show instant notification
   Future<void> showInstantNotification({
     required String title,
     required String body,
@@ -319,39 +248,38 @@ class NotificationService {
     Map<String, dynamic>? payload,
   }) async {
     try {
-      final notificationId = id ?? DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final payloadStr = payload != null ? jsonEncode(payload) : null;
+      final String dynamicId = await _getDynamicChannelId();
+      final prefs = await SharedPreferences.getInstance();
+      final bool sound = prefs.getBool('reminder_sound') ?? true;
+      final bool vib = prefs.getBool('reminder_vibration') ?? true;
 
       await flutterLocalNotificationsPlugin.show(
-        notificationId,
+        id ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
         title,
         body,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            _channelId,
+            dynamicId,
             _channelName,
             channelDescription: _channelDescription,
             importance: Importance.max,
             priority: Priority.high,
-            enableVibration: true,
-            enableLights: true,
-            playSound: true,
+            icon: '@mipmap/ic_launcher',
+            enableVibration: vib,
+            playSound: sound,
           ),
-          iOS: const DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
+          iOS: const DarwinNotificationDetails(),
         ),
-        payload: payloadStr,
+        payload: payload != null ? jsonEncode(payload) : null,
       );
-      print('✅ Instant notification shown: $title');
     } catch (e) {
       print('❌ Error showing notification: $e');
     }
   }
 
-  /// Dispose streams
+  Future<void> cancelNotification(int id) async =>
+      await flutterLocalNotificationsPlugin.cancel(id);
+
   void dispose() {
     _notificationTapStream.close();
     _messageReceivedStream.close();
