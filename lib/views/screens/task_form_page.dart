@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
+import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Task? task;
@@ -29,7 +30,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task?.title ?? '');
-    _descriptionController = TextEditingController(text: widget.task?.description ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.task?.description ?? '');
     _selectedDate = widget.task?.dueDate ?? DateTime.now();
     if (widget.task?.dueDate != null) {
       _selectedTime = TimeOfDay.fromDateTime(widget.task!.dueDate!);
@@ -79,7 +81,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
       actions: [
         if (widget.task != null)
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+            icon: const Icon(
+                Icons.delete_outline_rounded, color: Colors.redAccent),
             onPressed: () => _confirmDelete(),
           ),
         const SizedBox(width: 8),
@@ -109,7 +112,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
         ),
         const SizedBox(height: 16),
         Text(
-          widget.task == null ? "What's on your\nmind?" : "Refine your\nobjective",
+          widget.task == null
+              ? "What's on your\nmind?"
+              : "Refine your\nobjective",
           style: TextStyle(
             color: darkText,
             fontSize: 34,
@@ -160,7 +165,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
       children: [
         Row(
           children: [
-            Icon(Icons.calendar_month_rounded, size: 18, color: Colors.grey[400]),
+            Icon(Icons.calendar_month_rounded, size: 18,
+                color: Colors.grey[400]),
             const SizedBox(width: 8),
             Text(
               "SCHEDULE",
@@ -243,7 +249,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-Widget _buildBottomActionButton() {
+  Widget _buildBottomActionButton() {
     // CHOICE 1: Vibrant Teams Blue (Recommended)
     final Color buttonColor = primaryBlue;
 
@@ -268,20 +274,22 @@ Widget _buildBottomActionButton() {
           style: ElevatedButton.styleFrom(
             backgroundColor: buttonColor,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-            shadowColor: buttonColor.withOpacity(0.4), // Soft glow in the button color
+            shadowColor: buttonColor.withOpacity(
+                0.4), // Soft glow in the button color
           ),
           child: _isLoading
               ? const CircularProgressIndicator(color: Colors.white)
               : Text(
-                  widget.task == null ? "Create Task" : "Update Objective",
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900, // Extra bold for high-end look
-                    letterSpacing: 0.5,
-                  ),
-                ),
+            widget.task == null ? "Create Task" : "Update Objective",
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900, // Extra bold for high-end look
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ),
     );
@@ -295,12 +303,13 @@ Widget _buildBottomActionButton() {
       initialDate: _selectedDate!,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(primary: primaryBlue),
-        ),
-        child: child!,
-      ),
+      builder: (context, child) =>
+          Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(primary: primaryBlue),
+            ),
+            child: child!,
+          ),
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
@@ -313,63 +322,79 @@ Widget _buildBottomActionButton() {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
-void _confirmDelete() {
+  void _confirmDelete() {
     // Standard Flutter haptic method
     HapticFeedback.heavyImpact();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Text("Delete Task?", style: TextStyle(fontWeight: FontWeight.w800)),
-        content: const Text("Are you sure you want to remove this mission?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel")
+      builder: (context) =>
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25)),
+            title: const Text(
+                "Delete Task?", style: TextStyle(fontWeight: FontWeight.w800)),
+            content: const Text(
+                "Are you sure you want to remove this mission?"),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel")
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<TaskViewModel>().deleteTask(widget.task!.id);
+                  Navigator.pop(context); // Close Dialog
+                  Navigator.pop(context); // Go back to List
+                },
+                child: const Text("Delete", style: TextStyle(
+                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              context.read<TaskViewModel>().deleteTask(widget.task!.id);
-              Navigator.pop(context); // Close Dialog
-              Navigator.pop(context); // Go back to List
-            },
-            child: const Text("Delete", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
     );
   }
 
   Future<void> _saveTask() async {
-    if (_titleController.text.trim().isEmpty) {
-      HapticFeedback.vibrate();
-      return;
-    }
+    if (_titleController.text
+        .trim()
+        .isEmpty) return;
 
     setState(() => _isLoading = true);
-    HapticFeedback.mediumImpact();
 
-    final DateTime finalDueDate = DateTime(
-      _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
-      _selectedTime!.hour, _selectedTime!.minute,
-    );
+    try {
+      final DateTime finalDueDate = DateTime(
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        _selectedTime!.hour,
+        _selectedTime!.minute,
+      );
 
-    final newTask = Task(
-      id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: _titleController.text.trim(),
-      description: _descriptionController.text.trim(),
-      isCompleted: widget.task?.isCompleted ?? false,
-      createdAt: widget.task?.createdAt ?? DateTime.now(),
-      dueDate: finalDueDate,
-    );
+      final newTask = Task(
+        id: widget.task?.id ?? DateTime
+            .now()
+            .millisecondsSinceEpoch
+            .toString(),
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        isCompleted: widget.task?.isCompleted ?? false,
+        createdAt: widget.task?.createdAt ?? DateTime.now(),
+        dueDate: finalDueDate,
+      );
 
-    if (widget.task == null) {
-      await context.read<TaskViewModel>().addTask(newTask);
-    } else {
-      await context.read<TaskViewModel>().updateTask(newTask);
+      if (widget.task == null) {
+        await context.read<TaskViewModel>().addTask(newTask);
+      } else {
+        await context.read<TaskViewModel>().updateTask(newTask);
+      }
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint('❌ Error saving task: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    if (mounted) Navigator.pop(context);
   }
+
 }

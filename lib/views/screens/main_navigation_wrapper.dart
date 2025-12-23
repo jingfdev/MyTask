@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:mytask_project/views/screens/home_page.dart';
 import 'package:mytask_project/views/screens/task_list_screen.dart';
 import 'package:mytask_project/views/screens/calendar_screen.dart';
 import 'package:mytask_project/views/screens/settings_page.dart';
+
+import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
   const MainNavigationWrapper({Key? key}) : super(key: key);
@@ -20,6 +24,14 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     CalendarScreen(),
     SettingsPage(),
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ✅ Load tasks for logged-in user
+    context.read<TaskViewModel>().fetchTasks();
+  }
 
   @override
   Widget build(BuildContext context) {
