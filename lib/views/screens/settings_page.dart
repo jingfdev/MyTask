@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 
 import '../../viewmodels/task_viewmodel.dart';
+import 'reminder_settings_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -77,23 +78,34 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               elevation: 0,
               pinned: true,
               floating: false,
-              leading: Container(
-                margin: const EdgeInsets.only(left: 8, top: 8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colorScheme.surface.withOpacity(0.8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  color: colorScheme.onSurface,
-                  onPressed: () => Navigator.pop(context),
+              // FIXED: Simplified leading to ensure IconButton works perfectly
+              leading: Center(
+                child: Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colorScheme.surface.withOpacity(0.8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    color: colorScheme.onSurface,
+                    onPressed: () {
+                      // Force the pop on the root navigator
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        // Fallback if the stack is somehow empty
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    },
+                  ),
                 ),
               ),
               title: Transform.translate(
@@ -109,7 +121,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               ),
               centerTitle: true,
             ),
-
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,12 +204,30 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
 
                   _buildAnimatedSettingTile(
                     context: context,
+                    icon: Icons.alarm,
+                    title: 'Reminder',
+                    subtitle: 'Set up task reminders',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ReminderSettingsPage(),
+                        ),
+                      );
+                    },
+                    index: 5,
+                  ),
+
+                  _buildAnimatedSettingTile(
+                    context: context,
                     icon: Icons.language_outlined,
                     title: 'Language',
                     subtitle: 'Change app language',
                     onTap: () {},
-                    index: 5,
+                    index: 6,
                   ),
+
+
 
                   const SizedBox(height: 8),
 
@@ -217,7 +246,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     onTap: () {
                       _showHelpBottomSheet(context);
                     },
-                    index: 6,
+                    index: 7,
                   ),
 
                   _buildAnimatedSettingTile(
@@ -226,7 +255,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     title: 'Send Feedback',
                     subtitle: 'Share your thoughts with us',
                     onTap: () {},
-                    index: 7,
+                    index: 8,
                   ),
 
                   _buildAnimatedSettingTile(
@@ -235,7 +264,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     title: 'Privacy Policy',
                     subtitle: 'Review our privacy practices',
                     onTap: () {},
-                    index: 8,
+                    index: 9,
                   ),
 
                   const SizedBox(height: 32),
