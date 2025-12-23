@@ -15,7 +15,7 @@ class Task {
     this.dueDate,
   });
 
-  // Helper method for updating tasks in the ViewModel
+  /// Helper method for updating tasks
   Task copyWith({
     String? id,
     String? title,
@@ -34,9 +34,22 @@ class Task {
     );
   }
 
+  /// 🔄 FROM MAP (Firestore + Local Safe)
   factory Task.fromMap(Map<String, dynamic> data, String id) {
+    // ---- createdAt (safe)
+    DateTime createdAt;
+    final rawCreatedAt = data['createdAt'];
+
+    if (rawCreatedAt is String && rawCreatedAt.isNotEmpty) {
+      createdAt = DateTime.tryParse(rawCreatedAt) ?? DateTime.now();
+    } else {
+      createdAt = DateTime.now();
+    }
+
+    // ---- dueDate (safe & optional)
     DateTime? parsedDueDate;
     final rawDueDate = data['dueDate'];
+
     if (rawDueDate is String && rawDueDate.isNotEmpty) {
       parsedDueDate = DateTime.tryParse(rawDueDate);
     }
@@ -46,11 +59,12 @@ class Task {
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       isCompleted: data['isCompleted'] ?? false,
-      createdAt: DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt: createdAt,
       dueDate: parsedDueDate,
     );
   }
 
+  /// 🔄 TO MAP (Firestore + Local)
   Map<String, dynamic> toMap() {
     return {
       'title': title,
