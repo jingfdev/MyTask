@@ -1,186 +1,114 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/task.dart';
-import '../services/local_task_service.dart';
 import '../services/notification_service.dart';
 import 'notification_viewmodel.dart';
 
 class TaskViewModel extends ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final LocalTaskService _localService = LocalTaskService();
-
   late NotificationViewModel _notificationViewModel;
 
   List<Task> tasks = [];
 
   TaskViewModel() {
     _notificationViewModel = NotificationViewModel();
-    fetchTasks();
   }
 
-  bool get isGuest =>
-      _auth.currentUser == null;
-
-
-  String? get userId => _auth.currentUser?.uid;
-
-  /// 🔄 FETCH TASKS
+  /// Fetch all tasks
   Future<void> fetchTasks() async {
-    if (isGuest) {
-      // 🟡 Guest → Local storage
-      tasks = await _localService.loadTasks();
-    } else {
-      if (userId == null) return;
+    final snapshot = await _db
+        .collection('tasks')
+        .orderBy('createdAt', descending: true)
+        .get();
 
-      final snapshot = await _db
-          .collection('users')
-          .doc(userId)
-          .collection('tasks')
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      tasks = snapshot.docs
-          .map((doc) => Task.fromMap(doc.data(), doc.id))
-          .toList();
-    }
+    tasks = snapshot.docs
+        .map((doc) => Task.fromMap(doc.data(), doc.id))
+        .toList();
 
     notifyListeners();
   }
 
-  /// ➕ ADD TASK
+  /// Add a new task with notification
   Future<void> addTask(Task task) async {
-    debugPrint('--- ADD TASK START ---');
-    debugPrint('currentUser: ${_auth.currentUser}');
-    debugPrint('uid: ${_auth.currentUser?.uid}');
-    debugPrint('isAnonymous: ${_auth.currentUser?.isAnonymous}');
-    debugPrint('isGuest: $isGuest');
+    await _db.collection('tasks').add(task.toMap());
 
-    if (isGuest) {
-      debugPrint('➡️ SAVING TO LOCAL STORAGE');
-      await _localService.addTask(task);
-    } else {
-      debugPrint('➡️ SAVING TO FIRESTORE');
+    // Send notification for task creation
+    await _notificationViewModel.sendTaskCreatedNotification(task);
 
-      await _db
-          .collection('users')
-          .doc(userId)
-          .collection('tasks')
-          .add(task.toMap());
+    // Schedule deadline reminder if due date exists
+    if (task.dueDate != null) {
+      await _notificationViewModel.sendTaskDueReminder(task);
+      await _notificationViewModel.sendDeadlineApproachingNotification(task);
     }
 
     await fetchTasks();
-    debugPrint('--- ADD TASK END ---');
   }
 
-  /// ✏️ UPDATE TASK
+  /// Update existing task with notification
   Future<void> updateTask(Task task) async {
-    if (isGuest) {
-      await _localService.updateTask(task);
-    } else {
-      if (userId == null) return;
+    await _db.collection('tasks').doc(task.id).update(task.toMap());
 
-      await _db
-          .collection('users')
-          .doc(userId)
-          .collection('tasks')
-          .doc(task.id)
-          .update(task.toMap());
+    // Send notification for task update
+    await _notificationViewModel.sendTaskUpdatedNotification(task);
 
-      await _notificationViewModel.sendTaskUpdatedNotification(task);
-
-      await NotificationService()
-          .cancelNotification((task.id + '_deadline').hashCode);
-
-      if (task.dueDate != null) {
-        await _notificationViewModel.sendDeadlineApproachingNotification(task);
-      }
+    // Re-schedule notifications if due date changed
+    await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
+    if (task.dueDate != null) {
+      await _notificationViewModel.sendDeadlineApproachingNotification(task);
     }
 
     await fetchTasks();
   }
 
-  /// 🗑 DELETE TASK
+  /// Delete task
   Future<void> deleteTask(String id) async {
-    if (isGuest) {
-      await _localService.deleteTask(id);
-    } else {
-      if (userId == null) return;
+    await _db.collection('tasks').doc(id).delete();
 
-      await _db
-          .collection('users')
-          .doc(userId)
-          .collection('tasks')
-          .doc(id)
-          .delete();
-
-      await NotificationService().cancelNotification(id.hashCode);
-      await NotificationService()
-          .cancelNotification((id + '_deadline').hashCode);
-    }
+    // Cancel associated notifications
+    await NotificationService().cancelNotification(id.hashCode);
+    await NotificationService().cancelNotification((id + '_deadline').hashCode);
 
     await fetchTasks();
   }
 
-  /// ✅ TOGGLE COMPLETE
+  /// Mark task as completed with notification
+/// Toggle completion status (Complete/Undo)
   Future<void> toggleTaskCompletion(Task task) async {
-    final updatedTask = task.copyWith(
-      isCompleted: !task.isCompleted,
-    );
+    final newStatus = !task.isCompleted;
 
-    if (isGuest) {
-      await _localService.updateTask(updatedTask);
-    } else {
-      if (userId == null) return;
+    await _db.collection('tasks').doc(task.id).update({
+      'isCompleted': newStatus,
+    });
 
-      await _db
-          .collection('users')
-          .doc(userId)
-          .collection('tasks')
-          .doc(task.id)
-          .update({'isCompleted': updatedTask.isCompleted});
-
-      if (updatedTask.isCompleted) {
-        await _notificationViewModel.sendTaskCompletedNotification(task);
-        await NotificationService().cancelNotification(task.id.hashCode);
-        await NotificationService()
-            .cancelNotification((task.id + '_deadline').hashCode);
-      }
+    if (newStatus) {
+      // Send notification only when marking as completed
+      await _notificationViewModel.sendTaskCompletedNotification(task);
+      // Cancel scheduled notifications
+      await NotificationService().cancelNotification(task.id.hashCode);
+      await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
     }
 
+    // Refresh the local list
     await fetchTasks();
   }
 
-  /// 📅 CALENDAR TASKS
-  Future<List<Task>> getTasksByDate(DateTime date) async {
-    if (isGuest) {
-      final all = await _localService.loadTasks();
-      return all.where((task) {
-        if (task.dueDate == null) return false;
-        return task.dueDate!.year == date.year &&
-            task.dueDate!.month == date.month &&
-            task.dueDate!.day == date.day;
-      }).toList();
-    } else {
-      if (userId == null) return [];
+  /// Get tasks for a specific date (Calendar)
+Future<List<Task>> getTasksByDate(DateTime date) async {
+    // Start of the selected day
+    final start = DateTime(date.year, date.month, date.day);
+    // End of the selected day (Start of next day)
+    final end = start.add(const Duration(days: 1));
 
-      final start = DateTime(date.year, date.month, date.day);
-      final end = start.add(const Duration(days: 1));
+    final snapshot = await _db
+        .collection('tasks')
+        .where('dueDate', isGreaterThanOrEqualTo: start.toIso8601String())
+        .where('dueDate', isLessThan: end.toIso8601String())
+        .get();
 
-      final snapshot = await _db
-          .collection('users')
-          .doc(userId)
-          .collection('tasks')
-          .where('dueDate', isGreaterThanOrEqualTo: start.toIso8601String())
-          .where('dueDate', isLessThan: end.toIso8601String())
-          .get();
-
-      return snapshot.docs
-          .map((doc) => Task.fromMap(doc.data(), doc.id))
-          .toList();
-    }
+    return snapshot.docs
+        .map((doc) => Task.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   @override

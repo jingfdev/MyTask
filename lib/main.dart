@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
@@ -24,12 +23,16 @@ import 'package:mytask_project/views/screens/notifications_screen.dart';
 /// Global navigator key for handling notification navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-/// Background message handler
+/// Background message handler for Firebase Cloud Messaging
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase for background handler
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  print('Handling background message: ${message.messageId}');
+  // Background messages are handled by the system, just log them
 }
 
 void main() async {
@@ -44,27 +47,20 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // ✅ AUTO GUEST LOGIN (ANONYMOUS)
-    final auth = FirebaseAuth.instance;
-    if (auth.currentUser == null) {
-      await auth.signInAnonymously();
-    }
-
-    // Set navigator key before notifications
+    // Set navigator key before initializing NotificationService
     NotificationService().setNavigatorKey(navigatorKey);
 
     // Initialize notifications
     await NotificationService().initialize();
 
-    // Background message handler
-    FirebaseMessaging.onBackgroundMessage(
-      _firebaseMessagingBackgroundHandler,
-    );
+    // Set up background message handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     runApp(const MyApp());
   } catch (e, stackTrace) {
     print('❌ Error in main: $e');
     print('Stack trace: $stackTrace');
+    // Run app anyway without notifications
     runApp(const MyApp());
   }
 }
@@ -82,15 +78,16 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
+          // Register token callback after providers are ready
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            final userVm = Provider.of<UserViewModel>(
-              context,
-              listen: false,
-            );
-
-            NotificationService().onTokenGenerated = (token) {
-              userVm.saveFcmToken(token);
-            };
+            try {
+              final userVm = Provider.of<UserViewModel>(context, listen: false);
+              NotificationService().onTokenGenerated = (token) {
+                userVm.saveFcmToken(token);
+              };
+            } catch (e) {
+              print('❌ Error registering token callback: $e');
+            }
           });
 
           return MaterialApp(
@@ -100,6 +97,11 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                centerTitle: false,
+              ),
             ),
             home: WelcomeScreen(),
             routes: {
@@ -116,7 +118,7 @@ class MyApp extends StatelessWidget {
               if (settings.name == '/edit-task') {
                 final task = settings.arguments as Task;
                 return MaterialPageRoute(
-                  builder: (_) => TaskFormPage(task: task),
+                  builder: (context) => TaskFormPage(task: task),
                 );
               }
               return null;
