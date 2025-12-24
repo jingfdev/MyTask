@@ -5,6 +5,8 @@ import 'package:mytask_project/viewmodels/notification_viewmodel.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/views/widgets/notification_badge.dart';
 import 'package:mytask_project/models/task.dart';
+import 'package:mytask_project/models/notification.dart';
+import 'package:mytask_project/services/notification_service.dart';
 
 /// Example Integration Guide - Copy code snippets into your screens
 
