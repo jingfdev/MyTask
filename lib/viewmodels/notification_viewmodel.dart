@@ -26,13 +26,13 @@ class NotificationViewModel extends ChangeNotifier {
 
     // Listen to incoming FCM messages
     _notificationService.messageReceivedStream.listen((message) {
-      print('📬 New FCM message: ${message.messageId}');
+      debugPrint('📬 New FCM message: ${message.messageId}');
     });
   }
 
   /// Handle notification tap
   void _handleNotificationTap(Map<String, dynamic> notification) {
-    print('Notification tapped: $notification');
+    debugPrint('Notification tapped: $notification');
     // This can be used to navigate to relevant task details
   }
 
@@ -65,9 +65,9 @@ class NotificationViewModel extends ChangeNotifier {
           .doc(id)
           .set(notification.toMap());
 
-      print('✅ Notification created: $title');
+      debugPrint('✅ Notification created: $title');
     } catch (e) {
-      print('❌ Error creating notification: $e');
+      debugPrint('❌ Error creating notification: $e');
     }
   }
 
@@ -140,7 +140,7 @@ class NotificationViewModel extends ChangeNotifier {
             '{"taskId": "${task.id}", "type": "taskDeadlineApproaching"}',
       );
 
-      print('✅ Deadline approaching notification scheduled for: $task.title');
+      debugPrint('✅ Deadline approaching notification scheduled for: ${task.title}');
     }
   }
 
@@ -191,7 +191,7 @@ class NotificationViewModel extends ChangeNotifier {
       _updateUnreadCount();
       notifyListeners();
     } catch (e) {
-      print('❌ Error fetching notifications: $e');
+      debugPrint('❌ Error fetching notifications: $e');
     }
   }
 
@@ -211,7 +211,7 @@ class NotificationViewModel extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('❌ Error marking notification as read: $e');
+      debugPrint('❌ Error marking notification as read: $e');
     }
   }
 
@@ -224,7 +224,7 @@ class NotificationViewModel extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('❌ Error marking all as read: $e');
+      debugPrint('❌ Error marking all as read: $e');
     }
   }
 
@@ -236,7 +236,7 @@ class NotificationViewModel extends ChangeNotifier {
       _updateUnreadCount();
       notifyListeners();
     } catch (e) {
-      print('❌ Error deleting notification: $e');
+      debugPrint('❌ Error deleting notification: $e');
     }
   }
 
@@ -250,7 +250,7 @@ class NotificationViewModel extends ChangeNotifier {
       _updateUnreadCount();
       notifyListeners();
     } catch (e) {
-      print('❌ Error deleting all notifications: $e');
+      debugPrint('❌ Error deleting all notifications: $e');
     }
   }
 

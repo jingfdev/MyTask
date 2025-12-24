@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/animation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 
@@ -8,7 +7,7 @@ import '../../viewmodels/task_viewmodel.dart';
 import 'reminder_settings_page.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -84,10 +83,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                   margin: const EdgeInsets.only(left: 8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colorScheme.surface.withOpacity(0.8),
+                    color: colorScheme.surface.withValues(alpha: 0.8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -282,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       color: colorScheme.surface,
                       border: Border(
                         top: BorderSide(
-                          color: colorScheme.outline.withOpacity(0.1),
+                          color: colorScheme.outline.withValues(alpha: 0.1),
                           width: 1,
                         ),
                       ),
@@ -341,10 +340,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.1),
+                    color: colorScheme.outline.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -358,8 +357,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         gradient: LinearGradient(
                           colors: isLinked
                               ? [
-                            colorScheme.primary.withOpacity(0.1),
-                            colorScheme.primary.withOpacity(0.05),
+                            colorScheme.primary.withValues(alpha: 0.1),
+                            colorScheme.primary.withValues(alpha: 0.05),
                           ]
                               : [
                             Colors.white,
@@ -403,7 +402,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                             Text(
                               user.email!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.6),
+                                color: colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             )
                           else
@@ -412,7 +411,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isLinked
                                     ? colorScheme.primary
-                                    : colorScheme.onSurface.withOpacity(0.6),
+                                    : colorScheme.onSurface.withValues(alpha: 0.6),
                                 fontWeight: isLinked ? FontWeight.w600 : FontWeight.normal,
                               ),
                             ),
@@ -424,8 +423,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: isLinked
-                            ? colorScheme.primary.withOpacity(0.1)
-                            : Colors.grey.withOpacity(0.1),
+                            ? colorScheme.primary.withValues(alpha: 0.1)
+                            : Colors.grey.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -443,7 +442,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                           Text(
                             isLinked ? 'Connected' : 'Not Linked',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: isLinked ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.5),
+                              color: isLinked ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.5),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -471,19 +470,23 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         await userViewModel.migrateGuestTasksToFirestore();
 
         // 🔄 Reload tasks after migration
-        await context.read<TaskViewModel>().fetchTasks();
+        if (context.mounted) {
+          await context.read<TaskViewModel>().fetchTasks();
 
-        _showSnackBar(
-          context,
-          'Google account linked successfully!',
-        );
+          _showSnackBar(
+            context,
+            'Google account linked successfully!',
+          );
+        }
       }
 
     } catch (e) {
-      _showSnackBar(
-        context,
-        'Failed to link Google account. Please try again.',
-      );
+      if (context.mounted) {
+        _showSnackBar(
+          context,
+          'Failed to link Google account. Please try again.',
+        );
+      }
     }
   }
 
@@ -517,13 +520,13 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           Icon(
             icon,
             size: 20,
-            color: colorScheme.primary.withOpacity(0.8),
+            color: colorScheme.primary.withValues(alpha: 0.8),
           ),
           const SizedBox(width: 12),
           Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.9),
+              color: colorScheme.onSurface.withValues(alpha: 0.9),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -573,10 +576,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.1),
+                    color: colorScheme.outline.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -588,8 +591,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           colors: [
-                            colorScheme.primary.withOpacity(0.1),
-                            colorScheme.primary.withOpacity(0.05),
+                            colorScheme.primary.withValues(alpha: 0.1),
+                            colorScheme.primary.withValues(alpha: 0.05),
                           ],
                         ),
                       ),
@@ -615,7 +618,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                           Text(
                             subtitle,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.6),
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -623,7 +626,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     ),
                     Icon(
                       Icons.chevron_right,
-                      color: colorScheme.onSurface.withOpacity(0.3),
+                      color: colorScheme.onSurface.withValues(alpha: 0.3),
                       size: 24,
                     ),
                   ],
@@ -672,10 +675,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -687,8 +690,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: [
-                          colorScheme.primary.withOpacity(0.1),
-                          colorScheme.primary.withOpacity(0.05),
+                          colorScheme.primary.withValues(alpha: 0.1),
+                          colorScheme.primary.withValues(alpha: 0.05),
                         ],
                       ),
                     ),
@@ -714,7 +717,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         Text(
                           subtitle,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.6),
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -731,7 +734,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                           ? LinearGradient(
                         colors: [
                           colorScheme.primary,
-                          colorScheme.primary.withOpacity(0.8),
+                          colorScheme.primary.withValues(alpha: 0.8),
                         ],
                       )
                           : null,
@@ -739,12 +742,12 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       border: Border.all(
                         color: value
                             ? Colors.transparent
-                            : colorScheme.outline.withOpacity(0.3),
+                            : colorScheme.outline.withValues(alpha: 0.3),
                       ),
                       boxShadow: value
                           ? [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -773,10 +776,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                                 shape: BoxShape.circle,
                                 color: value
                                     ? Colors.white
-                                    : colorScheme.onSurface.withOpacity(0.3),
+                                    : colorScheme.onSurface.withValues(alpha: 0.3),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(value ? 0.1 : 0.05),
+                                    color: Colors.black.withValues(alpha: value ? 0.1 : 0.05),
                                     blurRadius: 4,
                                     offset: const Offset(0, 1),
                                   ),
@@ -799,7 +802,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
 
   Widget _buildSignOutButton(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -814,7 +816,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withOpacity(0.3),
+            color: Colors.red.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -825,8 +827,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         child: InkWell(
           onTap: () => _showSignOutDialog(context),
           borderRadius: BorderRadius.circular(14),
-          highlightColor: Colors.red.withOpacity(0.3),
-          splashColor: Colors.red.withOpacity(0.5),
+          highlightColor: Colors.red.withValues(alpha: 0.3),
+          splashColor: Colors.red.withValues(alpha: 0.5),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
             child: Row(
@@ -879,7 +881,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -946,7 +948,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -966,7 +968,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -974,7 +976,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           ),
           Icon(
             Icons.chevron_right,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         ],
       ),
@@ -1031,7 +1033,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                 'Are you sure you want to sign out of your account?',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               actions: [
@@ -1046,7 +1048,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                             borderRadius: BorderRadius.circular(12),
                           ),
                           side: BorderSide(
-                            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
@@ -1111,3 +1113,5 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     _animationController.forward();
   }
 }
+
+

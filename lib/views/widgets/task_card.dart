@@ -9,7 +9,7 @@ import 'package:mytask_project/views/screens/task_form_page.dart';
 
 class TaskCard extends StatelessWidget {
   final Task task;
-  const TaskCard({Key? key, required this.task}) : super(key: key);
+  const TaskCard({super.key, required this.task});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),

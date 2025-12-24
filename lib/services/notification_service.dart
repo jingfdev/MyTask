@@ -83,9 +83,9 @@ class NotificationService {
         );
       }
 
-      print('✅ NotificationService initialized successfully');
+      debugPrint('✅ NotificationService initialized successfully');
     } catch (e) {
-      print('❌ Error initializing NotificationService: $e');
+      debugPrint('❌ Error initializing NotificationService: $e');
     }
   }
 
@@ -176,7 +176,7 @@ class NotificationService {
         _navigatorKey!.currentState?.pushNamed('/tasks', arguments: data);
       }
     } catch (e) {
-      print('❌ Navigation error: $e');
+      debugPrint('❌ Navigation error: $e');
     }
   }
 
@@ -190,7 +190,7 @@ class NotificationService {
     try {
       // 1. Check if the time is in the past
       if (scheduledTime.isBefore(DateTime.now())) {
-        print('⚠️ Cannot schedule notification in the past');
+        debugPrint('⚠️ Cannot schedule notification in the past');
         return;
       }
 
@@ -201,7 +201,7 @@ class NotificationService {
 
         final bool? canSchedule = await androidPlugin?.canScheduleExactNotifications();
         if (canSchedule == false) {
-          print('⚠️ Exact alarms not permitted. Redirecting to settings.');
+          debugPrint('⚠️ Exact alarms not permitted. Redirecting to settings.');
           await androidPlugin?.requestExactAlarmsPermission();
           return; // Stop here; the user needs to grant permission first
         }
@@ -235,9 +235,9 @@ class NotificationService {
         payload: payload,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
-      print('✅ Scheduled successfully for $scheduledTime');
+      debugPrint('✅ Scheduled successfully for $scheduledTime');
     } catch (e) {
-      print('❌ Error scheduling notification: $e');
+      debugPrint('❌ Error scheduling notification: $e');
     }
   }
 
@@ -273,7 +273,7 @@ class NotificationService {
         payload: payload != null ? jsonEncode(payload) : null,
       );
     } catch (e) {
-      print('❌ Error showing notification: $e');
+      debugPrint('❌ Error showing notification: $e');
     }
   }
 

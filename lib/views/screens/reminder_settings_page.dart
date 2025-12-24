@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/notification_service.dart';
 
 class ReminderSettingsPage extends StatefulWidget {
-  const ReminderSettingsPage({Key? key}) : super(key: key);
+  const ReminderSettingsPage({super.key});
 
   @override
   State<ReminderSettingsPage> createState() => _ReminderSettingsPageState();
@@ -127,10 +127,10 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                 margin: const EdgeInsets.only(left: 8, top: 8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: colorScheme.surface.withOpacity(0.8),
+                  color: colorScheme.surface.withValues(alpha: 0.8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -266,12 +266,12 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: colorScheme.primary.withOpacity(0.8)),
+          Icon(icon, size: 20, color: colorScheme.primary.withValues(alpha: 0.8)),
           const SizedBox(width: 12),
           Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.9),
+              color: colorScheme.onSurface.withValues(alpha: 0.9),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -310,9 +310,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colorScheme.outline.withOpacity(0.1), width: 1),
+                    border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1), width: 1),
                   ),
                   child: Row(
                     children: [
@@ -320,7 +320,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [colorScheme.primary.withOpacity(0.1), colorScheme.primary.withOpacity(0.05)]),
+                          gradient: LinearGradient(colors: [colorScheme.primary.withValues(alpha: 0.1), colorScheme.primary.withValues(alpha: 0.05)]),
                         ),
                         child: Icon(icon, size: 22, color: colorScheme.primary),
                       ),
@@ -331,11 +331,11 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                           children: [
                             Text(title, style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w500)),
                             const SizedBox(height: 4),
-                            Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.6))),
+                            Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.6))),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right, color: colorScheme.onSurface.withOpacity(0.3), size: 24),
+                      Icon(Icons.chevron_right, color: colorScheme.onSurface.withValues(alpha: 0.3), size: 24),
                     ],
                   ),
                 ),
@@ -375,9 +375,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colorScheme.outline.withOpacity(0.1), width: 1),
+                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1), width: 1),
                 ),
                 child: Row(
                   children: [
@@ -385,7 +385,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(colors: [colorScheme.primary.withOpacity(0.1), colorScheme.primary.withOpacity(0.05)]),
+                        gradient: LinearGradient(colors: [colorScheme.primary.withValues(alpha: 0.1), colorScheme.primary.withValues(alpha: 0.05)]),
                       ),
                       child: Icon(icon, size: 22, color: colorScheme.primary),
                     ),
@@ -396,7 +396,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                         children: [
                           Text(title, style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 4),
-                          Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.6))),
+                          Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     ),
@@ -409,9 +409,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                         height: 28,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
-                          gradient: value ? LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.8)]) : null,
+                          gradient: value ? LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.8)]) : null,
                           color: value ? null : colorScheme.surface,
-                          border: Border.all(color: value ? Colors.transparent : colorScheme.outline.withOpacity(0.3)),
+                          border: Border.all(color: value ? Colors.transparent : colorScheme.outline.withValues(alpha: 0.3)),
                         ),
                         child: AnimatedAlign(
                           duration: const Duration(milliseconds: 300),
@@ -420,7 +420,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                             margin: const EdgeInsets.all(2),
                             width: 24,
                             height: 24,
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: value ? Colors.white : colorScheme.onSurface.withOpacity(0.3)),
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: value ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.3)),
                           ),
                         ),
                       ),
@@ -444,7 +444,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: isSelected ? colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+        color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () async {
@@ -459,7 +459,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
               children: [
                 Icon(
                   isSelected ? Icons.check_circle : Icons.circle_outlined,
-                  color: isSelected ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.3),
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
                 const SizedBox(width: 16),
                 Text(
@@ -484,9 +484,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [colorScheme.primary.withOpacity(0.1), colorScheme.primary.withOpacity(0.05)]),
+        gradient: LinearGradient(colors: [colorScheme.primary.withValues(alpha: 0.1), colorScheme.primary.withValues(alpha: 0.05)]),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.2), width: 1),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         children: [
@@ -495,7 +495,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
           Expanded(
             child: Text(
               'Reminders will be sent based on your task due dates and selected advance notice time.',
-              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.8), height: 1.5),
+              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.8), height: 1.5),
             ),
           ),
         ],
@@ -518,9 +518,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.8)]),
+                gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.8)]),
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                boxShadow: [BoxShadow(color: colorScheme.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -560,7 +560,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(margin: const EdgeInsets.only(top: 16, bottom: 8), width: 40, height: 4, decoration: BoxDecoration(color: colorScheme.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(2))),
+              Container(margin: const EdgeInsets.only(top: 16, bottom: 8), width: 40, height: 4, decoration: BoxDecoration(color: colorScheme.onSurface.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2))),
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -569,7 +569,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                     children: [
                       Text('Advance Notice', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      Text('Get notified before task deadline', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.6))),
+                      Text('Get notified before task deadline', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.6))),
                       const SizedBox(height: 24),
                       ..._advanceNoticeOptions.map((minutes) => _buildNoticeOptionTile(context, minutes)).toList(),
                     ],
