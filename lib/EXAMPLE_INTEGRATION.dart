@@ -198,7 +198,7 @@ class ExampleIntegration {
     );
   }
 
-  /// EXAMPLE 13: Get notifications for a specific task
+  /// Get notifications for a specific task
   static void exampleGetTaskNotifications(
     BuildContext context,
     String taskId,
@@ -206,9 +206,9 @@ class ExampleIntegration {
     final viewModel = context.read<NotificationViewModel>();
     final taskNotifications = viewModel.getNotificationsByTask(taskId);
 
-    print('Notifications for task $taskId: ${taskNotifications.length}');
+    debugPrint('Notifications for task $taskId: ${taskNotifications.length}');
     for (var notification in taskNotifications) {
-      print('  - ${notification.title}: ${notification.body}');
+      debugPrint('  - ${notification.title}: ${notification.body}');
     }
   }
 

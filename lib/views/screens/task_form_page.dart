@@ -4,11 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
-import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Task? task;
-  const TaskFormPage({Key? key, this.task}) : super(key: key);
+  const TaskFormPage({super.key, this.task});
 
   @override
   State<TaskFormPage> createState() => _TaskFormPageState();
@@ -97,7 +96,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: primaryBlue.withOpacity(0.1),
+            color: primaryBlue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -218,7 +217,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
           decoration: BoxDecoration(
             color: bgGray,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withOpacity(0.05)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.05)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +262,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.white.withOpacity(0), Colors.white],
+          colors: [Colors.white.withValues(alpha: 0), Colors.white],
         ),
       ),
       child: SizedBox(
@@ -277,7 +276,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-            shadowColor: buttonColor.withOpacity(
+            shadowColor: buttonColor.withValues(alpha: 
                 0.4), // Soft glow in the button color
           ),
           child: _isLoading
@@ -358,7 +357,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
   Future<void> _saveTask() async {
     if (_titleController.text
         .trim()
-        .isEmpty) return;
+        .isEmpty) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 

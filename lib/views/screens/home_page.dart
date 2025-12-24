@@ -8,7 +8,7 @@ import 'package:confetti/confetti.dart';
 import 'package:table_calendar/table_calendar.dart'; // Required for isSameDay
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
             actions: [
               Container(
                 margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(color: const Color(0xFF2D5AF0).withOpacity(0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: const Color(0xFF2D5AF0).withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: IconButton(
                   icon: const Icon(Icons.add, color: Color(0xFF2D5AF0), size: 26),
                   onPressed: () => Navigator.of(context).pushNamed('/add-task'),
@@ -164,8 +164,8 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey.withOpacity(0.1)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
         ),
         child: SingleChildScrollView(
           physics: const NeverScrollableScrollPhysics(),
@@ -231,7 +231,7 @@ class _HomePageState extends State<HomePage> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 8,
-            backgroundColor: Colors.blue.withOpacity(0.1),
+            backgroundColor: Colors.blue.withValues(alpha: 0.1),
             color: const Color(0xFF2D5AF0),
           ),
         )
@@ -243,13 +243,13 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(color: color.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(color: color.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
         ],

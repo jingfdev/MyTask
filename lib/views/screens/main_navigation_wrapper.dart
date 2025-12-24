@@ -9,7 +9,7 @@ import 'package:mytask_project/views/screens/settings_page.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
-  const MainNavigationWrapper({Key? key}) : super(key: key);
+  const MainNavigationWrapper({super.key});
 
   @override
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();

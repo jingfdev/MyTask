@@ -8,7 +8,7 @@ import 'package:mytask_project/views/screens/task_form_page.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class TaskListScreen extends StatefulWidget {
-  const TaskListScreen({Key? key}) : super(key: key);
+  const TaskListScreen({super.key});
 
   @override
   State<TaskListScreen> createState() => _TaskListScreenState();
@@ -122,7 +122,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
           border: Border.all(color: const Color(0xFFEDF0F7), width: 1.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 15,
               offset: const Offset(0, 8),
             )
@@ -203,7 +203,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
         ),
         Icon(
           progress >= 1.0 ? Icons.emoji_events_rounded : Icons.person_rounded,
-          color: dynamicColor.withOpacity(0.4), size: 18,
+          color: dynamicColor.withValues(alpha: 0.4), size: 18,
         ),
       ],
     );
@@ -293,9 +293,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withOpacity(0.1)),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [
@@ -303,7 +303,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
             const SizedBox(height: 10),
             Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: color.withOpacity(0.5), fontSize: 7, fontWeight: FontWeight.w900)),
+            Text(label, style: TextStyle(color: color.withValues(alpha: 0.5), fontSize: 7, fontWeight: FontWeight.w900)),
           ],
         ),
       ),
@@ -388,8 +388,11 @@ class _TaskListScreenState extends State<TaskListScreen> {
     var filtered = tasks.where((task) {
       bool matchesSearch = task.title.toLowerCase().contains(_searchQuery.toLowerCase());
       bool matchesFilter = true;
-      if (_selectedFilter == 'today') matchesFilter = task.dueDate != null && isSameDay(task.dueDate, DateTime.now());
-      else if (_selectedFilter == 'upcoming') matchesFilter = task.dueDate != null && task.dueDate!.isAfter(DateTime.now());
+      if (_selectedFilter == 'today') {
+        matchesFilter = task.dueDate != null && isSameDay(task.dueDate, DateTime.now());
+      } else if (_selectedFilter == 'upcoming') {
+        matchesFilter = task.dueDate != null && task.dueDate!.isAfter(DateTime.now());
+      }
       return matchesSearch && matchesFilter;
     }).toList();
 

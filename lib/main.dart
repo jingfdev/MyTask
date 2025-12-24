@@ -63,8 +63,8 @@ void main() async {
 
     runApp(const MyApp());
   } catch (e, stackTrace) {
-    print('❌ Error in main: $e');
-    print('Stack trace: $stackTrace');
+    debugPrint('❌ Error in main: $e');
+    debugPrint('Stack trace: $stackTrace');
     runApp(const MyApp());
   }
 }

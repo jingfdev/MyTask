@@ -10,7 +10,7 @@ import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  const CalendarScreen({super.key});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -27,7 +27,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
  final List<Map<String, dynamic>> _celebrations = [
   // --- High Energy / Productivity ---
-  {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent},
+  {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent.withValues(alpha: 0.9)},
   {"title": "Unstoppable!", "msg": "Perfect day completed!", "icon": "🚀", "color": Colors.blueAccent},
   {"title": "Victory!", "msg": "All items checked. Great focus!", "icon": "⭐", "color": Colors.purpleAccent},
   {"title": "Productivity King!", "msg": "You made that look easy.", "icon": "👑", "color": Colors.amber},
@@ -52,7 +52,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   {"title": "Beast Mode", "msg": "List: 0 | You: 1", "icon": "🦁", "color": Colors.brown},
   {"title": "Done & Dusted", "msg": "See you tomorrow!", "icon": "✅", "color": Colors.green},
   {"title": "Legendary!", "msg": "That's how you get things done.", "icon": "🏅", "color": Colors.orange},
-  {"title": "Mission Complete", "msg": "Returning to base for rest.", "icon": "🚁", "color": Colors.deepPurpleAccent},
+  {"title": "Mission Complete", "msg": "Returning to base for rest.", "icon": "🚁", "color": Colors.deepPurpleAccent.withValues(alpha: 0.9)},
 ];
 
   @override
@@ -108,7 +108,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: ShapeDecoration(
-                gradient: LinearGradient(colors: [themeColor, themeColor.withOpacity(0.6)]),
+                gradient: LinearGradient(colors: [themeColor, themeColor.withValues(alpha: 0.6)]),
                 shape: const StadiumBorder()
               ),
               child: Text(
@@ -124,7 +124,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Container(
                 width: 80, height: 80,
                 decoration: BoxDecoration(
-                  color: themeColor.withOpacity(0.1),
+                  color: themeColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -211,7 +211,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                     child: Text(DateFormat('MMM dd').format(_selectedDate),
                       style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
@@ -376,7 +376,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Container(
       key: const ValueKey("compact"),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.blue.withOpacity(0.04), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(20)),
       child: Row(
         children: [
           _buildStatItem("TASKS", "$done/$total", Colors.blueAccent),
@@ -441,7 +441,7 @@ Widget _buildFullDashboard(int total, int done, int streak, double progress) {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: Colors.blue.withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   )
@@ -512,9 +512,9 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
     decoration: BoxDecoration(
-      color: color.withOpacity(0.08),
+      color: color.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withOpacity(0.12), width: 1),
+      border: Border.all(color: color.withValues(alpha: 0.12), width: 1),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,7 +528,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
               child: Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: color.withOpacity(0.6),
+                  color: color.withValues(alpha: 0.6),
                   fontSize: 7, // Smaller font
                   fontWeight: FontWeight.w900,
                 ),
@@ -592,7 +592,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: Colors.green.withOpacity(0.4), blurRadius: 10, spreadRadius: 2)
+                    BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 10, spreadRadius: 2)
                   ],
                 ),
               ),
@@ -653,7 +653,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
         ),
         calendarStyle: CalendarStyle(
           selectedDecoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
-          todayDecoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.1), shape: BoxShape.circle),
+          todayDecoration: BoxDecoration(color: Colors.blueAccent.withValues(alpha: 0.1), shape: BoxShape.circle),
           todayTextStyle: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
         ),
       ),
@@ -691,7 +691,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
           borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(25), bottomRight: Radius.circular(25)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 5)
             )
@@ -746,7 +746,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FE).withOpacity(0.8),
+        color: const Color(0xFFF8F9FE).withValues(alpha: 0.8),
       ),
       child: Row(
         children: [
@@ -780,7 +780,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
   Widget _buildNoTaskCard(String message) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.withOpacity(0.1))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.withValues(alpha: 0.1))),
       child: Row(children: [Icon(Icons.wb_sunny_outlined, color: Colors.orange[300], size: 20), const SizedBox(width: 12), Text(message, style: TextStyle(color: Colors.grey[400], fontSize: 14))]),
     );
   }
@@ -846,7 +846,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
           ],
         ),
         child: Container(
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))]),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: GestureDetector(
@@ -905,10 +905,10 @@ class AnimatedStrikethroughText extends StatelessWidget {
   final bool isCompleted;
 
   const AnimatedStrikethroughText({
-    Key? key,
+    super.key,
     required this.text,
     required this.isCompleted,
-  }) : super(key: key);
+  }) : super();
 
   @override
   Widget build(BuildContext context) {
