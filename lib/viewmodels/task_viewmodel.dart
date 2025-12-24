@@ -1,114 +1,193 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/task.dart';
+import '../services/local_task_service.dart';
 import '../services/notification_service.dart';
 import 'notification_viewmodel.dart';
 
 class TaskViewModel extends ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final LocalTaskService _localService = LocalTaskService();
+
   late NotificationViewModel _notificationViewModel;
 
   List<Task> tasks = [];
 
   TaskViewModel() {
     _notificationViewModel = NotificationViewModel();
+    fetchTasks();
   }
 
-  /// Fetch all tasks
+  bool get isGuest => _auth.currentUser == null;
+  String? get userId => _auth.currentUser?.uid;
+
+  // --- NEW: PRIVATE HELPER FOR DYNAMIC REMINDERS ---
+
+// Inside TaskViewModel class
+  Future<void> _scheduleTaskReminder(Task task) async {
+    if (task.dueDate == null || task.isCompleted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
+
+    // Calculate reminder time: e.g., 5:00 PM - 15 mins = 4:45 PM
+    final scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
+
+    // Only schedule if the reminder time is in the future
+    if (scheduledTime.isAfter(DateTime.now())) {
+      await NotificationService().scheduleNotification(
+        id: task.id.hashCode,
+        title: 'Upcoming Task',
+        body: '${task.title} is due in $advanceMinutes minutes!',
+        scheduledTime: scheduledTime,
+      );
+      print('⏰ Notification scheduled for: $scheduledTime');
+    }
+  }
+  // --- MODIFIED METHODS ---
+
   Future<void> fetchTasks() async {
-    final snapshot = await _db
-        .collection('tasks')
-        .orderBy('createdAt', descending: true)
-        .get();
+    if (isGuest) {
+      tasks = await _localService.loadTasks();
+    } else {
+      if (userId == null) return;
+      final snapshot = await _db
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .orderBy('createdAt', descending: true)
+          .get();
 
-    tasks = snapshot.docs
-        .map((doc) => Task.fromMap(doc.data(), doc.id))
-        .toList();
-
+      tasks = snapshot.docs
+          .map((doc) => Task.fromMap(doc.data(), doc.id))
+          .toList();
+    }
     notifyListeners();
   }
 
-  /// Add a new task with notification
   Future<void> addTask(Task task) async {
-    await _db.collection('tasks').add(task.toMap());
+    String finalId = task.id;
 
-    // Send notification for task creation
-    await _notificationViewModel.sendTaskCreatedNotification(task);
-
-    // Schedule deadline reminder if due date exists
-    if (task.dueDate != null) {
-      await _notificationViewModel.sendTaskDueReminder(task);
-      await _notificationViewModel.sendDeadlineApproachingNotification(task);
+    if (isGuest) {
+      await _localService.addTask(task);
+    } else {
+      final docRef = await _db
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .add(task.toMap());
+      finalId = docRef.id;
     }
+
+    // Schedule the reminder for the newly added task
+    await _scheduleTaskReminder(task.copyWith(id: finalId));
 
     await fetchTasks();
   }
 
-  /// Update existing task with notification
   Future<void> updateTask(Task task) async {
-    await _db.collection('tasks').doc(task.id).update(task.toMap());
+    if (isGuest) {
+      await _localService.updateTask(task);
+    } else {
+      if (userId == null) return;
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .doc(task.id)
+          .update(task.toMap());
 
-    // Send notification for task update
-    await _notificationViewModel.sendTaskUpdatedNotification(task);
+      await _notificationViewModel.sendTaskUpdatedNotification(task);
+    }
 
-    // Re-schedule notifications if due date changed
-    await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
-    if (task.dueDate != null) {
-      await _notificationViewModel.sendDeadlineApproachingNotification(task);
+    // Refresh Local Notifications: Cancel old and set new
+    await NotificationService().cancelNotification(task.id.hashCode);
+    if (!task.isCompleted) {
+      await _scheduleTaskReminder(task);
     }
 
     await fetchTasks();
   }
 
-  /// Delete task
   Future<void> deleteTask(String id) async {
-    await _db.collection('tasks').doc(id).delete();
-
-    // Cancel associated notifications
-    await NotificationService().cancelNotification(id.hashCode);
-    await NotificationService().cancelNotification((id + '_deadline').hashCode);
-
-    await fetchTasks();
-  }
-
-  /// Mark task as completed with notification
-/// Toggle completion status (Complete/Undo)
-  Future<void> toggleTaskCompletion(Task task) async {
-    final newStatus = !task.isCompleted;
-
-    await _db.collection('tasks').doc(task.id).update({
-      'isCompleted': newStatus,
-    });
-
-    if (newStatus) {
-      // Send notification only when marking as completed
-      await _notificationViewModel.sendTaskCompletedNotification(task);
-      // Cancel scheduled notifications
-      await NotificationService().cancelNotification(task.id.hashCode);
-      await NotificationService().cancelNotification((task.id + '_deadline').hashCode);
+    if (isGuest) {
+      await _localService.deleteTask(id);
+    } else {
+      if (userId == null) return;
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .doc(id)
+          .delete();
     }
 
-    // Refresh the local list
+    // Stop any pending alerts for this deleted task
+    await NotificationService().cancelNotification(id.hashCode);
     await fetchTasks();
   }
 
-  /// Get tasks for a specific date (Calendar)
-Future<List<Task>> getTasksByDate(DateTime date) async {
-    // Start of the selected day
-    final start = DateTime(date.year, date.month, date.day);
-    // End of the selected day (Start of next day)
-    final end = start.add(const Duration(days: 1));
+  Future<void> toggleTaskCompletion(Task task) async {
+    final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
 
-    final snapshot = await _db
-        .collection('tasks')
-        .where('dueDate', isGreaterThanOrEqualTo: start.toIso8601String())
-        .where('dueDate', isLessThan: end.toIso8601String())
-        .get();
+    if (isGuest) {
+      await _localService.updateTask(updatedTask);
+    } else {
+      if (userId == null) return;
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .doc(task.id)
+          .update({'isCompleted': updatedTask.isCompleted});
 
-    return snapshot.docs
-        .map((doc) => Task.fromMap(doc.data(), doc.id))
-        .toList();
+      if (updatedTask.isCompleted) {
+        await _notificationViewModel.sendTaskCompletedNotification(task);
+      }
+    }
+
+    // Manage Notifications based on completion
+    if (updatedTask.isCompleted) {
+      await NotificationService().cancelNotification(task.id.hashCode);
+    } else {
+      await _scheduleTaskReminder(updatedTask);
+    }
+
+    await fetchTasks();
+  }
+
+  // ... (getTasksByDate remains same as your original)
+  Future<List<Task>> getTasksByDate(DateTime date) async {
+    if (isGuest) {
+      final all = await _localService.loadTasks();
+      return all.where((task) {
+        if (task.dueDate == null) return false;
+        return task.dueDate!.year == date.year &&
+            task.dueDate!.month == date.month &&
+            task.dueDate!.day == date.day;
+      }).toList();
+    } else {
+      if (userId == null) return [];
+      final start = DateTime(date.year, date.month, date.day);
+      final end = start.add(const Duration(days: 1));
+
+      final snapshot = await _db
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .where('dueDate', isGreaterThanOrEqualTo: start.toIso8601String())
+          .where('dueDate', isLessThan: end.toIso8601String())
+          .get();
+
+      return snapshot.docs
+          .map((doc) => Task.fromMap(doc.data(), doc.id))
+          .toList();
+    }
   }
 
   @override
