@@ -31,11 +31,23 @@ class _TaskFormPageState extends State<TaskFormPage> {
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _descriptionController =
         TextEditingController(text: widget.task?.description ?? '');
+
+    // Set initial date
     _selectedDate = widget.task?.dueDate ?? DateTime.now();
+
     if (widget.task?.dueDate != null) {
+      // If editing, use the existing task's time
       _selectedTime = TimeOfDay.fromDateTime(widget.task!.dueDate!);
     } else {
-      _selectedTime = TimeOfDay.now();
+      // LOGIC: Default to the next 5-minute interval for a cleaner UI
+      final now = DateTime.now();
+      int minutesToAdd = 5 - (now.minute % 5);
+      DateTime suggestedTime = now.add(Duration(minutes: minutesToAdd));
+
+      _selectedTime = TimeOfDay(
+        hour: suggestedTime.hour,
+        minute: suggestedTime.minute,
+      );
     }
   }
 
@@ -217,7 +229,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
           decoration: BoxDecoration(
             color: bgGray,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.05)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,11 +261,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Widget _buildBottomActionButton() {
-    // CHOICE 1: Vibrant Teams Blue (Recommended)
     final Color buttonColor = primaryBlue;
-
-    // CHOICE 2: Premium Amber/Yellow (Uncomment below to use)
-    // final Color buttonColor = const Color(0xFFFFB800);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
@@ -276,8 +284,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-            shadowColor: buttonColor.withValues(alpha: 
-                0.4), // Soft glow in the button color
+            shadowColor: buttonColor.withValues(alpha: 0.4),
           ),
           child: _isLoading
               ? const CircularProgressIndicator(color: Colors.white)
@@ -285,7 +292,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             widget.task == null ? "Create Task" : "Update Objective",
             style: const TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.w900, // Extra bold for high-end look
+              fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),
           ),
@@ -294,7 +301,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  // --- Logic Methods (Date/Time/Save) ---
+  // --- Logic Methods ---
 
   Future<void> _pickDate(BuildContext context) async {
     final picked = await showDatePicker(
@@ -322,9 +329,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   void _confirmDelete() {
-    // Standard Flutter haptic method
     HapticFeedback.heavyImpact();
-
     showDialog(
       context: context,
       builder: (context) =>
@@ -343,8 +348,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
               TextButton(
                 onPressed: () {
                   context.read<TaskViewModel>().deleteTask(widget.task!.id);
-                  Navigator.pop(context); // Close Dialog
-                  Navigator.pop(context); // Go back to List
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 child: const Text("Delete", style: TextStyle(
                     color: Colors.redAccent, fontWeight: FontWeight.bold)),
@@ -355,11 +360,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Future<void> _saveTask() async {
-    if (_titleController.text
-        .trim()
-        .isEmpty) {
-      return;
-    }
+    if (_titleController.text.trim().isEmpty) return;
 
     setState(() => _isLoading = true);
 
@@ -373,10 +374,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
       );
 
       final newTask = Task(
-        id: widget.task?.id ?? DateTime
-            .now()
-            .millisecondsSinceEpoch
-            .toString(),
+        id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         isCompleted: widget.task?.isCompleted ?? false,
@@ -397,5 +395,4 @@ class _TaskFormPageState extends State<TaskFormPage> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
 }

@@ -100,10 +100,8 @@ class NotificationService {
       final androidPlugin = flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-      // Request standard Notification Permission (Android 13+)
       await androidPlugin?.requestNotificationsPermission();
 
-      // Check and request Exact Alarm Permission (Android 12+)
       final bool? isAllowed = await androidPlugin?.canScheduleExactNotifications();
       if (isAllowed == false) {
         await androidPlugin?.requestExactAlarmsPermission();
@@ -180,34 +178,46 @@ class NotificationService {
     }
   }
 
+  /// --- UPDATED: Schedule based on task deadline and user settings ---
   Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
-    required DateTime scheduledTime,
+    required DateTime taskDueDate, // Input the actual task deadline
     String? payload,
   }) async {
     try {
-      // 1. Check if the time is in the past
+      final prefs = await SharedPreferences.getInstance();
+
+      // 1. Check if reminders are globally enabled
+      final bool enabled = prefs.getBool('reminder_enabled') ?? true;
+      if (!enabled) return;
+
+      // 2. Fetch user's advance notice preference (default to 30 mins)
+      final int advanceNotice = prefs.getInt('advance_notice_minutes') ?? 30;
+
+      // 3. Calculate reminder time
+      DateTime scheduledTime = taskDueDate.subtract(Duration(minutes: advanceNotice));
+
+      // 4. SAFETY CATCH-UP: If time is in the past, notify in 5 seconds
       if (scheduledTime.isBefore(DateTime.now())) {
-        debugPrint('⚠️ Cannot schedule notification in the past');
-        return;
+        debugPrint('⚠️ Intended reminder time was in the past. Triggering 5s catch-up.');
+        scheduledTime = DateTime.now().add(const Duration(seconds: 5));
       }
 
-      // 2. Android 12+ Safety Check for Exact Alarms
+      // 5. Android Exact Alarm Permission Check
       if (Platform.isAndroid) {
         final androidPlugin = flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
         final bool? canSchedule = await androidPlugin?.canScheduleExactNotifications();
         if (canSchedule == false) {
-          debugPrint('⚠️ Exact alarms not permitted. Redirecting to settings.');
+          debugPrint('⚠️ Exact alarms not permitted.');
           await androidPlugin?.requestExactAlarmsPermission();
-          return; // Stop here; the user needs to grant permission first
+          return;
         }
       }
 
-      final prefs = await SharedPreferences.getInstance();
       final bool sound = prefs.getBool('reminder_sound') ?? true;
       final bool vib = prefs.getBool('reminder_vibration') ?? true;
       final String dynamicId = await _getDynamicChannelId();
@@ -235,7 +245,7 @@ class NotificationService {
         payload: payload,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
-      debugPrint('✅ Scheduled successfully for $scheduledTime');
+      debugPrint('✅ Reminder set for $scheduledTime (Due: $taskDueDate)');
     } catch (e) {
       debugPrint('❌ Error scheduling notification: $e');
     }
