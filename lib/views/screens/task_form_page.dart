@@ -26,11 +26,23 @@ class _TaskFormPageState extends State<TaskFormPage> {
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _descriptionController =
         TextEditingController(text: widget.task?.description ?? '');
+
+    // Set initial date
     _selectedDate = widget.task?.dueDate ?? DateTime.now();
+
     if (widget.task?.dueDate != null) {
+      // If editing, use the existing task's time
       _selectedTime = TimeOfDay.fromDateTime(widget.task!.dueDate!);
     } else {
-      _selectedTime = TimeOfDay.now();
+      // LOGIC: Default to the next 5-minute interval for a cleaner UI
+      final now = DateTime.now();
+      int minutesToAdd = 5 - (now.minute % 5);
+      DateTime suggestedTime = now.add(Duration(minutes: minutesToAdd));
+
+      _selectedTime = TimeOfDay(
+        hour: suggestedTime.hour,
+        minute: suggestedTime.minute,
+      );
     }
   }
 
@@ -218,7 +230,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+border: Border.all(
+  color: colorScheme.outline.withValues(alpha: 0.1),
+),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,7 +263,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildBottomActionButton(ColorScheme colorScheme) {
+Widget _buildBottomActionButton(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
       decoration: BoxDecoration(
@@ -271,7 +285,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
+shadowColor: colorScheme.primary.withValues(alpha: 0.4),
           ),
           child: _isLoading
               ? CircularProgressIndicator(color: colorScheme.onPrimary)
@@ -288,7 +302,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  // --- Logic Methods (Date/Time/Save) ---
+  // --- Logic Methods ---
 
   Future<void> _pickDate(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
@@ -319,9 +333,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   void _confirmDelete() {
-    // Standard Flutter haptic method
     HapticFeedback.heavyImpact();
-
     showDialog(
       context: context,
       builder: (context) =>
@@ -340,8 +352,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
               TextButton(
                 onPressed: () {
                   context.read<TaskViewModel>().deleteTask(widget.task!.id);
-                  Navigator.pop(context); // Close Dialog
-                  Navigator.pop(context); // Go back to List
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 child: const Text("Delete", style: TextStyle(
                     color: Colors.redAccent, fontWeight: FontWeight.bold)),
@@ -352,11 +364,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Future<void> _saveTask() async {
-    if (_titleController.text
-        .trim()
-        .isEmpty) {
-      return;
-    }
+    if (_titleController.text.trim().isEmpty) return;
 
     setState(() => _isLoading = true);
 
@@ -370,10 +378,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
       );
 
       final newTask = Task(
-        id: widget.task?.id ?? DateTime
-            .now()
-            .millisecondsSinceEpoch
-            .toString(),
+        id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         isCompleted: widget.task?.isCompleted ?? false,
@@ -394,5 +399,4 @@ class _TaskFormPageState extends State<TaskFormPage> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
 }

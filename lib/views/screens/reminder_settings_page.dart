@@ -13,7 +13,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
   bool _enableReminders = true;
   bool _soundEnabled = true;
   bool _vibrationEnabled = true;
-  TimeOfDay _defaultReminderTime = const TimeOfDay(hour: 9, minute: 0);
   int _advanceNoticeMinutes = 30;
 
   late AnimationController _animationController;
@@ -36,17 +35,11 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     );
 
     _slideAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
     _animationController.forward();
@@ -59,22 +52,15 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
       _soundEnabled = prefs.getBool('reminder_sound') ?? true;
       _vibrationEnabled = prefs.getBool('reminder_vibration') ?? true;
       _advanceNoticeMinutes = prefs.getInt('advance_notice_minutes') ?? 30;
-
-      final hour = prefs.getInt('default_reminder_hour') ?? 9;
-      final minute = prefs.getInt('default_reminder_minute') ?? 0;
-      _defaultReminderTime = TimeOfDay(hour: hour, minute: minute);
     });
   }
 
-  // UPDATED: Now triggers the service refresh
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('reminder_enabled', _enableReminders);
     await prefs.setBool('reminder_sound', _soundEnabled);
     await prefs.setBool('reminder_vibration', _vibrationEnabled);
     await prefs.setInt('advance_notice_minutes', _advanceNoticeMinutes);
-    await prefs.setInt('default_reminder_hour', _defaultReminderTime.hour);
-    await prefs.setInt('default_reminder_minute', _defaultReminderTime.minute);
 
     // Sync the local notification channel behavior immediately
     await NotificationService().updateNotificationSettings();
@@ -110,10 +96,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
         builder: (context, child) {
           return Transform.translate(
             offset: Offset(0, (1 - _slideAnimation.value) * 20),
-            child: Opacity(
-              opacity: _fadeAnimation.value,
-              child: child,
-            ),
+            child: Opacity(opacity: _fadeAnimation.value, child: child),
           );
         },
         child: CustomScrollView(
@@ -122,7 +105,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
               backgroundColor: Colors.transparent,
               elevation: 0,
               pinned: true,
-              floating: false,
               leading: Container(
                 margin: const EdgeInsets.only(left: 8, top: 8),
                 decoration: BoxDecoration(
@@ -155,7 +137,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
               ),
               centerTitle: true,
             ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 100),
@@ -163,11 +144,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    _buildSectionHeader(
-                      context: context,
-                      title: 'General',
-                      icon: Icons.tune,
-                    ),
+                    _buildSectionHeader(context: context, title: 'General', icon: Icons.tune),
                     _buildAnimatedSwitchTile(
                       context: context,
                       icon: Icons.notifications_active,
@@ -177,21 +154,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                       onChanged: (value) async {
                         setState(() => _enableReminders = value);
                         await _saveSettings();
-                        _showSnackBar(
-                          context,
-                          value ? 'Reminders enabled' : 'Reminders disabled',
-                        );
+                        _showSnackBar(context, value ? 'Reminders enabled' : 'Reminders disabled');
                       },
                       index: 0,
-                    ),
-                    _buildAnimatedSettingTile(
-                      context: context,
-                      icon: Icons.access_time,
-                      title: 'Default Reminder Time',
-                      subtitle: _defaultReminderTime.format(context),
-                      onTap: _enableReminders ? () => _selectTime(context) : null,
-                      index: 1,
-                      enabled: _enableReminders,
                     ),
                     _buildAnimatedSettingTile(
                       context: context,
@@ -199,28 +164,22 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                       title: 'Advance Notice',
                       subtitle: _getAdvanceNoticeLabel(_advanceNoticeMinutes),
                       onTap: _enableReminders ? () => _selectAdvanceNotice(context) : null,
-                      index: 2,
+                      index: 1, // Changed index since Default Time is gone
                       enabled: _enableReminders,
                     ),
                     const SizedBox(height: 8),
-                    _buildSectionHeader(
-                      context: context,
-                      title: 'Alert Settings',
-                      icon: Icons.volume_up,
-                    ),
+                    _buildSectionHeader(context: context, title: 'Alert Settings', icon: Icons.volume_up),
                     _buildAnimatedSwitchTile(
                       context: context,
                       icon: Icons.volume_up,
                       title: 'Sound',
                       subtitle: 'Play sound for reminders',
                       value: _soundEnabled,
-                      onChanged: _enableReminders
-                          ? (value) async {
+                      onChanged: _enableReminders ? (value) async {
                         setState(() => _soundEnabled = value);
                         await _saveSettings();
-                      }
-                          : null,
-                      index: 3,
+                      } : null,
+                      index: 2,
                       enabled: _enableReminders,
                     ),
                     _buildAnimatedSwitchTile(
@@ -229,13 +188,11 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                       title: 'Vibration',
                       subtitle: 'Vibrate for reminders',
                       value: _vibrationEnabled,
-                      onChanged: _enableReminders
-                          ? (value) async {
+                      onChanged: _enableReminders ? (value) async {
                         setState(() => _vibrationEnabled = value);
                         await _saveSettings();
-                      }
-                          : null,
-                      index: 4,
+                      } : null,
+                      index: 3,
                       enabled: _enableReminders,
                     ),
                     const SizedBox(height: 24),
@@ -253,13 +210,9 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     );
   }
 
-  // --- UI HELPER METHODS (Design Kept Identical) ---
+  // --- UI HELPER METHODS ---
 
-  Widget _buildSectionHeader({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-  }) {
+  Widget _buildSectionHeader({required BuildContext context, required String title, required IconData icon}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Padding(
@@ -280,15 +233,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     );
   }
 
-  Widget _buildAnimatedSettingTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback? onTap,
-    required int index,
-    bool enabled = true,
-  }) {
+  Widget _buildAnimatedSettingTile({required BuildContext context, required IconData icon, required String title, required String subtitle, required VoidCallback? onTap, required int index, bool enabled = true}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final delay = index * 0.05;
@@ -347,16 +292,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     );
   }
 
-  Widget _buildAnimatedSwitchTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool>? onChanged,
-    required int index,
-    bool enabled = true,
-  }) {
+  Widget _buildAnimatedSwitchTile({required BuildContext context, required IconData icon, required String title, required String subtitle, required bool value, required ValueChanged<bool>? onChanged, required int index, bool enabled = true}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final delay = index * 0.05;
@@ -400,7 +336,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                         ],
                       ),
                     ),
-                    // Custom Toggle Design
                     GestureDetector(
                       onTap: enabled && onChanged != null ? () => onChanged(!value) : null,
                       child: AnimatedContainer(
@@ -435,7 +370,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     );
   }
 
-  // NEW: Missing Tile Helper for the Modal Bottom Sheet
   Widget _buildNoticeOptionTile(BuildContext context, int minutes) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -537,14 +471,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
     );
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final picked = await showTimePicker(context: context, initialTime: _defaultReminderTime);
-    if (picked != null) {
-      setState(() => _defaultReminderTime = picked);
-      await _saveSettings();
-    }
-  }
-
   Future<void> _selectAdvanceNotice(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
@@ -584,9 +510,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
   }
 
   Future<void> _testNotification() async {
-    // We update settings one last time to be sure service has latest toggles
     await _saveSettings();
-
     await NotificationService().showInstantNotification(
       title: 'Test Reminder',
       body: 'This is how your task reminders will appear',
