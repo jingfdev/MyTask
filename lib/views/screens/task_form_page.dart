@@ -20,11 +20,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
   TimeOfDay? _selectedTime;
   bool _isLoading = false;
 
-  // Colors from your Calendar Screen theme
-  final Color primaryBlue = const Color(0xFF2D5AF0); // Teams Blue
-  final Color bgGray = const Color(0xFFF8F9FE);
-  final Color darkText = const Color(0xFF1A1A1A);
-
   @override
   void initState() {
     super.initState();
@@ -41,9 +36,12 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
+      backgroundColor: colorScheme.surface,
+      appBar: _buildAppBar(theme, colorScheme),
       body: Column(
         children: [
           Expanded(
@@ -54,34 +52,34 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  _buildHeaderSection(),
+                  _buildHeaderSection(colorScheme),
                   const SizedBox(height: 40),
-                  _buildMainInputs(),
+                  _buildMainInputs(colorScheme),
                   const SizedBox(height: 40),
-                  _buildScheduleSection(),
+                  _buildScheduleSection(colorScheme),
                 ],
               ),
             ),
           ),
-          _buildBottomActionButton(),
+          _buildBottomActionButton(colorScheme),
         ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(ThemeData theme, ColorScheme colorScheme) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.close_rounded, color: darkText, size: 28),
+        icon: Icon(Icons.close_rounded, color: colorScheme.onSurface, size: 28),
         onPressed: () => Navigator.pop(context),
       ),
       actions: [
         if (widget.task != null)
           IconButton(
-            icon: const Icon(
-                Icons.delete_outline_rounded, color: Colors.redAccent),
+            icon: Icon(
+                Icons.delete_outline_rounded, color: colorScheme.error),
             onPressed: () => _confirmDelete(),
           ),
         const SizedBox(width: 8),
@@ -89,20 +87,20 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeaderSection(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: primaryBlue.withValues(alpha: 0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             widget.task == null ? "NEW MISSION" : "EDIT TASK",
             style: TextStyle(
-              color: primaryBlue,
+              color: colorScheme.primary,
               fontWeight: FontWeight.w900,
               fontSize: 11,
               letterSpacing: 1.5,
@@ -115,7 +113,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
               ? "What's on your\nmind?"
               : "Refine your\nobjective",
           style: TextStyle(
-            color: darkText,
+            color: colorScheme.onSurface,
             fontSize: 34,
             fontWeight: FontWeight.w800,
             height: 1.1,
@@ -125,7 +123,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildMainInputs() {
+  Widget _buildMainInputs(ColorScheme colorScheme) {
     return Column(
       children: [
         TextField(
@@ -133,11 +131,11 @@ class _TaskFormPageState extends State<TaskFormPage> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: darkText,
+            color: colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             hintText: "Task Title",
-            hintStyle: TextStyle(color: Colors.grey[300]),
+            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -147,10 +145,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
         TextField(
           controller: _descriptionController,
           maxLines: 4,
-          style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.5),
+          style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
           decoration: InputDecoration(
             hintText: "Add notes or sub-tasks...",
-            hintStyle: TextStyle(color: Colors.grey[300]),
+            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
             border: InputBorder.none,
           ),
         ),
@@ -158,19 +156,19 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildScheduleSection() {
+  Widget _buildScheduleSection(ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Icon(Icons.calendar_month_rounded, size: 18,
-                color: Colors.grey[400]),
+                color: colorScheme.onSurface.withValues(alpha: 0.4)),
             const SizedBox(width: 8),
             Text(
               "SCHEDULE",
               style: TextStyle(
-                color: Colors.grey[500],
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
                 letterSpacing: 1,
@@ -182,6 +180,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
         Row(
           children: [
             _buildPickerTile(
+              colorScheme: colorScheme,
               label: "Date",
               value: DateFormat('EEE, MMM dd').format(_selectedDate!),
               icon: Icons.today_rounded,
@@ -189,6 +188,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             ),
             const SizedBox(width: 16),
             _buildPickerTile(
+              colorScheme: colorScheme,
               label: "Time",
               value: _selectedTime!.format(context),
               icon: Icons.access_time_filled_rounded,
@@ -201,6 +201,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Widget _buildPickerTile({
+    required ColorScheme colorScheme,
     required String label,
     required String value,
     required IconData icon,
@@ -215,19 +216,19 @@ class _TaskFormPageState extends State<TaskFormPage> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: bgGray,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.05)),
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 20, color: primaryBlue),
+              Icon(icon, size: 20, color: colorScheme.primary),
               const SizedBox(height: 12),
               Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: Colors.grey[500],
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
@@ -236,7 +237,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
               Text(
                 value,
                 style: TextStyle(
-                  color: darkText,
+                  color: colorScheme.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -248,21 +249,15 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildBottomActionButton() {
-    // CHOICE 1: Vibrant Teams Blue (Recommended)
-    final Color buttonColor = primaryBlue;
-
-    // CHOICE 2: Premium Amber/Yellow (Uncomment below to use)
-    // final Color buttonColor = const Color(0xFFFFB800);
-
+  Widget _buildBottomActionButton(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.white.withValues(alpha: 0), Colors.white],
+          colors: [colorScheme.surface.withValues(alpha: 0), colorScheme.surface],
         ),
       ),
       child: SizedBox(
@@ -271,21 +266,20 @@ class _TaskFormPageState extends State<TaskFormPage> {
         child: ElevatedButton(
           onPressed: _isLoading ? null : () => _saveTask(),
           style: ElevatedButton.styleFrom(
-            backgroundColor: buttonColor,
-            foregroundColor: Colors.white,
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-            shadowColor: buttonColor.withValues(alpha: 
-                0.4), // Soft glow in the button color
+            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
           ),
           child: _isLoading
-              ? const CircularProgressIndicator(color: Colors.white)
+              ? CircularProgressIndicator(color: colorScheme.onPrimary)
               : Text(
             widget.task == null ? "Create Task" : "Update Objective",
             style: const TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.w900, // Extra bold for high-end look
+              fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),
           ),
@@ -297,6 +291,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   // --- Logic Methods (Date/Time/Save) ---
 
   Future<void> _pickDate(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate!,
@@ -305,7 +300,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
       builder: (context, child) =>
           Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(primary: primaryBlue),
+              colorScheme: colorScheme.copyWith(
+                primary: colorScheme.primary,
+              ),
             ),
             child: child!,
           ),

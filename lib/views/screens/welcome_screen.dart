@@ -5,7 +5,9 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -19,12 +21,12 @@ class WelcomeScreen extends StatelessWidget {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.blue[600],
+                    color: colorScheme.primary,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle,
                     size: 50,
-                    color: Colors.white,
+                    color: colorScheme.onPrimary,
                   ),
                 ),
                 SizedBox(height: 30),
@@ -33,7 +35,7 @@ class WelcomeScreen extends StatelessWidget {
                   'MyTasks',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: colorScheme.onSurface,
                       ),
                 ),
                 SizedBox(height: 15),
@@ -44,7 +46,7 @@ class WelcomeScreen extends StatelessWidget {
                     'Organize your day, conquer your goals.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                           height: 1.5,
                         ),
                   ),
@@ -59,7 +61,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[600],
+                    backgroundColor: colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -70,7 +72,7 @@ class WelcomeScreen extends StatelessWidget {
                   child: Text(
                     'Get Started',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
