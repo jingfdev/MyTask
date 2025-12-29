@@ -25,30 +25,22 @@ class TaskViewModel extends ChangeNotifier {
   bool get isGuest => _auth.currentUser == null;
   String? get userId => _auth.currentUser?.uid;
 
-  // --- NEW: PRIVATE HELPER FOR DYNAMIC REMINDERS ---
-
-// Inside TaskViewModel class
+  // --- REFINED PRIVATE HELPER ---
+  // The ViewModel now acts as a messenger, handing the deadline to the Service.
   Future<void> _scheduleTaskReminder(Task task) async {
     if (task.dueDate == null || task.isCompleted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
-
-    // Calculate reminder time: e.g., 5:00 PM - 15 mins = 4:45 PM
-    final scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
-
-    // Only schedule if the reminder time is in the future
-    if (scheduledTime.isAfter(DateTime.now())) {
-      await NotificationService().scheduleNotification(
-        id: task.id.hashCode,
-        title: 'Upcoming Task',
-        body: '${task.title} is due in $advanceMinutes minutes!',
-        scheduledTime: scheduledTime,
-      );
-      debugPrint('⏰ Notification scheduled for: $scheduledTime');
-    }
+    // We pass the taskDueDate directly.
+    // The Service will handle the "Advance Notice" math and "Catch-up" logic.
+    await NotificationService().scheduleNotification(
+      id: task.id.hashCode,
+      title: 'Mission Objective',
+      body: 'Reminder: ${task.title}',
+      taskDueDate: task.dueDate!,
+    );
   }
-  // --- MODIFIED METHODS ---
+
+  // --- CORE METHODS ---
 
   Future<void> fetchTasks() async {
     if (isGuest) {
@@ -154,13 +146,13 @@ class TaskViewModel extends ChangeNotifier {
     if (updatedTask.isCompleted) {
       await NotificationService().cancelNotification(task.id.hashCode);
     } else {
+      // Re-schedule if un-checked
       await _scheduleTaskReminder(updatedTask);
     }
 
     await fetchTasks();
   }
 
-  // ... (getTasksByDate remains same as your original)
   Future<List<Task>> getTasksByDate(DateTime date) async {
     if (isGuest) {
       final all = await _localService.loadTasks();
