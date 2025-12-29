@@ -47,7 +47,7 @@ class TaskCard extends StatelessWidget {
             ],
           ),
           child: Material(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             child: InkWell(
               onTap: () {
                 Navigator.push(
@@ -59,6 +59,7 @@ class TaskCard extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   border: Border(left: BorderSide(color: task.isCompleted ? Colors.green[400]! : Colors.blue[600]!, width: 6)),
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                 ),
                 child: Row(
                   children: [
@@ -71,7 +72,7 @@ class TaskCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: task.isCompleted ? Colors.green[400] : Colors.transparent,
                           borderRadius: BorderRadius.circular(7),
-                          border: Border.all(color: task.isCompleted ? Colors.green[400]! : Colors.grey[300]!, width: 2),
+                          border: Border.all(color: task.isCompleted ? Colors.green[400]! : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3), width: 2),
                         ),
                         child: task.isCompleted ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
                       ),
@@ -81,15 +82,15 @@ class TaskCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(task.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: task.isCompleted ? Colors.grey : Colors.black87, decoration: task.isCompleted ? TextDecoration.lineThrough : null)),
+                          Text(task.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: task.isCompleted ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.5) : Theme.of(context).colorScheme.onSurface, decoration: task.isCompleted ? TextDecoration.lineThrough : null)),
                           if (task.description.isNotEmpty) ...[
                             const SizedBox(height: 4),
-                            Text(task.description, maxLines: 1, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+                            Text(task.description, maxLines: 1, style: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4), fontSize: 13)),
                           ],
                         ],
                       ),
                     ),
-                    if (task.dueDate != null) _buildTimeBadge(formattedTime),
+                    if (task.dueDate != null) _buildTimeBadge(context, formattedTime),
                   ],
                 ),
               ),
@@ -100,11 +101,11 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeBadge(String time) {
+  Widget _buildTimeBadge(BuildContext context, String time) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey[100]!)),
-      child: Text(time, style: TextStyle(color: Colors.blue[700], fontSize: 11, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1))),
+      child: Text(time, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 }

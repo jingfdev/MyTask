@@ -11,6 +11,7 @@ import 'package:mytask_project/services/notification_service.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 import 'package:mytask_project/viewmodels/notification_viewmodel.dart';
+import 'package:mytask_project/viewmodels/theme_viewmodel.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/views/screens/welcome_screen.dart';
 import 'package:mytask_project/views/screens/onboarding_screen.dart';
@@ -50,6 +51,10 @@ void main() async {
       await auth.signInAnonymously();
     }
 
+    // Initialize theme before running app
+    final themeViewModel = ThemeViewModel();
+    await themeViewModel.initialize();
+
     // Set navigator key before notifications
     NotificationService().setNavigatorKey(navigatorKey);
 
@@ -61,7 +66,7 @@ void main() async {
       _firebaseMessagingBackgroundHandler,
     );
 
-    runApp(const MyApp());
+    runApp(MyApp(initialThemeViewModel: themeViewModel));
   } catch (e, stackTrace) {
     debugPrint('❌ Error in main: $e');
     debugPrint('Stack trace: $stackTrace');
@@ -70,12 +75,17 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final ThemeViewModel? initialThemeViewModel;
+
+  const MyApp({super.key, this.initialThemeViewModel});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<ThemeViewModel>.value(
+          value: initialThemeViewModel ?? ThemeViewModel(),
+        ),
         ChangeNotifierProvider(create: (_) => UserViewModel()),
         ChangeNotifierProvider(create: (_) => TaskViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
@@ -93,33 +103,50 @@ class MyApp extends StatelessWidget {
             };
           });
 
-          return MaterialApp(
-            navigatorKey: navigatorKey,
-            title: 'TaskMaster',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            ),
-            home: WelcomeScreen(),
-            routes: {
-              '/welcome': (_) => WelcomeScreen(),
-              '/onboarding': (_) => OnboardingScreen(),
-              '/home': (_) => MainNavigationWrapper(),
-              '/tasks': (_) => TaskListScreen(),
-              '/add-task': (_) => TaskFormPage(),
-              '/calendar': (_) => CalendarScreen(),
-              '/settings': (_) => SettingsPage(),
-              '/notifications': (_) => NotificationsScreen(),
-            },
-            onGenerateRoute: (settings) {
-              if (settings.name == '/edit-task') {
-                final task = settings.arguments as Task;
-                return MaterialPageRoute(
-                  builder: (_) => TaskFormPage(task: task),
-                );
-              }
-              return null;
+          return Consumer<ThemeViewModel>(
+            builder: (context, themeVm, _) {
+              return MaterialApp(
+                navigatorKey: navigatorKey,
+                title: 'TaskMaster',
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  brightness: Brightness.light,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: Colors.blue,
+                    brightness: Brightness.light,
+                  ),
+                ),
+                darkTheme: ThemeData(
+                  useMaterial3: true,
+                  brightness: Brightness.dark,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: Colors.blue,
+                    brightness: Brightness.dark,
+                  ),
+                ),
+                themeMode: themeVm.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+                home: WelcomeScreen(),
+                routes: {
+                  '/welcome': (_) => WelcomeScreen(),
+                  '/onboarding': (_) => OnboardingScreen(),
+                  '/home': (_) => MainNavigationWrapper(),
+                  '/tasks': (_) => TaskListScreen(),
+                  '/add-task': (_) => TaskFormPage(),
+                  '/calendar': (_) => CalendarScreen(),
+                  '/settings': (_) => SettingsPage(),
+                  '/notifications': (_) => NotificationsScreen(),
+                },
+                onGenerateRoute: (settings) {
+                  if (settings.name == '/edit-task') {
+                    final task = settings.arguments as Task;
+                    return MaterialPageRoute(
+                      builder: (_) => TaskFormPage(task: task),
+                    );
+                  }
+                  return null;
+                },
+              );
             },
           );
         },
