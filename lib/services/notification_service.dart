@@ -242,11 +242,14 @@ class NotificationService {
       debugPrint(
           '⏰ Scheduling notification - ID: $id, Title: $title, Time: $finalScheduledTime');
 
+      final tzScheduledTime = tz.TZDateTime.from(finalScheduledTime, tz.local);
+      debugPrint('⏰ TZDateTime: $tzScheduledTime (local: ${tz.local.name})');
+
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
         body,
-        tz.TZDateTime.from(finalScheduledTime, tz.local),
+        tzScheduledTime,
         NotificationDetails(
           android: AndroidNotificationDetails(
             dynamicId,

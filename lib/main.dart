@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'firebase_options.dart';
 
@@ -39,6 +41,11 @@ void main() async {
 
     // Initialize timezone database
     tz.initializeTimeZones();
+
+    // Set local timezone - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    debugPrint('✅ Timezone set to: $timeZoneName');
 
     // Initialize Firebase
     await Firebase.initializeApp(
