@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
+import 'package:mytask_project/viewmodels/theme_viewmodel.dart';
 
 import '../../viewmodels/task_viewmodel.dart';
 import 'reminder_settings_page.dart';
@@ -14,7 +15,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderStateMixin {
-  bool _darkMode = false;
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
@@ -55,7 +55,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -176,20 +175,24 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     icon: Icons.settings_outlined,
                   ),
 
-                  _buildAnimatedSwitchTile(
-                    context: context,
-                    icon: Icons.dark_mode_outlined,
-                    title: 'Dark Mode',
-                    subtitle: 'Switch between light and dark theme',
-                    value: _darkMode,
-                    onChanged: (value) {
-                      setState(() => _darkMode = value);
-                      _showSnackBar(
-                        context,
-                        value ? 'Dark mode enabled' : 'Dark mode disabled',
+                  Consumer<ThemeViewModel>(
+                    builder: (context, themeVm, _) {
+                      return _buildAnimatedSwitchTile(
+                        context: context,
+                        icon: Icons.dark_mode_outlined,
+                        title: 'Dark Mode',
+                        subtitle: 'Switch between light and dark theme',
+                        value: themeVm.isDarkMode,
+                        onChanged: (value) async {
+                          await themeVm.toggleDarkMode(value: value);
+                          _showSnackBar(
+                            context,
+                            value ? 'Dark mode enabled' : 'Dark mode disabled',
+                          );
+                        },
+                        index: 3,
                       );
                     },
-                    index: 3,
                   ),
 
                   _buildAnimatedSettingTile(

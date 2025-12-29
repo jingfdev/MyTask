@@ -189,9 +189,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       builder: (context) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           ),
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
           child: Column(
@@ -201,19 +201,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Center(
                 child: Container(
                   width: 40, height: 4,
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10)),
                 ),
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  const Text("New Task", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+                  Text("New Task", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                     child: Text(DateFormat('MMM dd').format(_selectedDate),
-                      style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
                 ],
               ),
@@ -221,19 +221,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
               TextField(
                 controller: titleController,
                 autofocus: true,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   hintText: "What needs to be done?",
-                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
                   border: InputBorder.none,
                 ),
               ),
               TextField(
                 controller: descController,
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                 decoration: InputDecoration(
                   hintText: "Add notes (optional)",
-                  hintStyle: TextStyle(color: Colors.grey[300]),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
                   border: InputBorder.none,
                 ),
               ),
@@ -243,7 +243,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text("Cancel", style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w600)),
+                    child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.6), fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
@@ -289,15 +289,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
             elevation: 4,
             child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
           ),
-          backgroundColor: const Color(0xFFF8F9FE),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
-            title: const Text('My Schedule', style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.w800, fontSize: 22)),
+            title: Text('My Schedule', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 22)),
             actions: [
               IconButton(
-                icon: Icon(_hideCompleted ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: _hideCompleted ? Colors.blue : Colors.grey),
+                icon: Icon(_hideCompleted ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: _hideCompleted ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline),
                 onPressed: () => setState(() => _hideCompleted = !_hideCompleted),
               ),
               IconButton(
@@ -358,7 +358,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
         height: _isDashboardExpanded ? 240 : 90,
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-        decoration: const BoxDecoration(color: Colors.white),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: SingleChildScrollView(
           physics: const NeverScrollableScrollPhysics(),
           child: AnimatedSwitcher(
@@ -376,19 +379,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Container(
       key: const ValueKey("compact"),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(20)),
       child: Row(
         children: [
           _buildStatItem("TASKS", "$done/$total", Colors.blueAccent),
           const SizedBox(width: 15),
-          Container(width: 1.5, height: 25, color: Colors.grey[300]),
+          Container(width: 1.5, height: 25, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
           const SizedBox(width: 15),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("PROGRESS", style: TextStyle(color: Colors.grey[500], fontSize: 9, fontWeight: FontWeight.w900)),
-              Text("${(progress * 100).toInt()}%", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              Text("PROGRESS", style: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.6), fontSize: 9, fontWeight: FontWeight.w900)),
+              Text("${(progress * 100).toInt()}%", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
             ],
           ),
           const Spacer(),
@@ -400,167 +403,168 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-Widget _buildFullDashboard(int total, int done, int streak, double progress) {
-  return Column(
-    key: const ValueKey("full"),
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Header Row
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.bolt_rounded, size: 20, color: Colors.orange[700]),
-              const SizedBox(width: 6),
-              const Text("PERFORMANCE", 
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.black87)),
-            ],
-          ),
-          const Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 20),
-        ],
-      ),
-      const SizedBox(height: 12), // Increased spacing
-      
-      // Main Content Row
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // BLUE BOX: Spans Col 1 & 2 across both rows
-          Expanded(
-            flex: 2, // Takes up 2/3 of the width
-            child: Container(
-              height: 140, // Explicit height to match the stack on the right
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.blue[900]!, Colors.blue[600]!],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  )
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Today's Score", 
-                    style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text("${(progress * 100).toInt()}%", 
-                    style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900)),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: progress, 
-                      backgroundColor: Colors.white24, 
-                      color: Colors.white, 
-                      minHeight: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(width: 12), // Gap between Blue and the stack
-          
-          // RIGHT SIDE: Stacked Streak and Goal
-          Expanded(
-            flex: 1, // Takes up 1/3 of the width
-            child: SizedBox(
-              height: 135, // Must match the blue box height exactly
-              child: Column(
-                children: [
-                  // YELLOW BOX (Row 1, Col 3)
-                  Expanded(
-                    child: _buildDashCard(
-                      "Streak", 
-                      "$streak Days", 
-                      Colors.orange, 
-                      Icons.local_fire_department_rounded
-                    ),
-                  ),
-                  const SizedBox(height: 10), // Gap between yellow and green
-                  // GREEN BOX (Row 2, Col 3)
-                  Expanded(
-                    child: _buildDashCard(
-                      "Goal", 
-                      "$done/$total", 
-                      Colors.green, 
-                      Icons.track_changes_rounded
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-Widget _buildDashCard(String label, String val, Color color, IconData icon) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withValues(alpha: 0.12), width: 1),
-    ),
-    child: Column(
+  Widget _buildFullDashboard(int total, int done, int streak, double progress) {
+    return Column(
+      key: const ValueKey("full"),
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // Header Row
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, size: 12, color: color), // Smaller icon
-            const SizedBox(width: 4),
+            Row(
+              children: [
+                Icon(Icons.bolt_rounded, size: 20, color: Colors.orange[700]),
+                const SizedBox(width: 6),
+                Text("PERFORMANCE",
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
+              ],
+            ),
+            const Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 20),
+          ],
+        ),
+        const SizedBox(height: 12), // Increased spacing
+
+        // Main Content Row
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // BLUE BOX: Spans Col 1 & 2 across both rows
             Expanded(
-              child: Text(
-                label.toUpperCase(),
-                style: TextStyle(
-                  color: color.withValues(alpha: 0.6),
-                  fontSize: 7, // Smaller font
-                  fontWeight: FontWeight.w900,
+              flex: 2, // Takes up 2/3 of the width
+              child: Container(
+                height: 140, // Explicit height to match the stack on the right
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.blue[900]!, Colors.blue[600]!],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    )
+                  ],
                 ),
-                overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Today's Score",
+                      style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text("${(progress * 100).toInt()}%",
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 42, fontWeight: FontWeight.w900)),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.24),
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        minHeight: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12), // Gap between Blue and the stack
+
+            // RIGHT SIDE: Stacked Streak and Goal
+            Expanded(
+              flex: 1, // Takes up 1/3 of the width
+              child: SizedBox(
+                height: 135, // Must match the blue box height exactly
+                child: Column(
+                  children: [
+                    // YELLOW BOX (Row 1, Col 3)
+                    Expanded(
+                      child: _buildDashCard(
+                        "Streak",
+                        "$streak Days",
+                        Colors.orange,
+                        Icons.local_fire_department_rounded
+                      ),
+                    ),
+                    const SizedBox(height: 10), // Gap between yellow and green
+                    // GREEN BOX (Row 2, Col 3)
+                    Expanded(
+                      child: _buildDashCard(
+                        "Goal",
+                        "$done/$total",
+                        Colors.green,
+                        Icons.track_changes_rounded
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 2),
-        // FittedBox prevents the "Overflow" by scaling the text down
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            val,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: 15, // Slightly smaller base font
+      ],
+    );
+  }
+
+  Widget _buildDashCard(String label, String val, Color color, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.12), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: color), // Smaller icon
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: TextStyle(
+                    color: color.withValues(alpha: 0.6),
+                    fontSize: 7, // Smaller font
+                    fontWeight: FontWeight.w900,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          // FittedBox prevents the "Overflow" by scaling the text down
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              val,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w900,
+                fontSize: 15, // Slightly smaller base font
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatItem(String label, String value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 9, fontWeight: FontWeight.w900)),
+        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.6), fontSize: 9, fontWeight: FontWeight.w900)),
         Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
       ],
     );
@@ -617,7 +621,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
   Widget _buildTeamsCalendarHeader() {
     final viewModel = context.watch<TaskViewModel>();
     return Container(
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
       child: TableCalendar(
         firstDay: DateTime.now().subtract(const Duration(days: 365)),
         lastDay: DateTime.now().add(const Duration(days: 365)),
@@ -687,7 +691,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
         width: double.infinity,
         height: 30,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(25), bottomRight: Radius.circular(25)),
           boxShadow: [
             BoxShadow(
@@ -704,7 +708,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
               width: 45,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10)
               ),
             ),
@@ -746,14 +750,14 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FE).withValues(alpha: 0.8),
+        color: Theme.of(context).colorScheme.surfaceContainer.withValues(alpha: 0.5),
       ),
       child: Row(
         children: [
           Container(
             width: 4, height: 16,
             decoration: BoxDecoration(
-              color: isToday ? Colors.blueAccent : Colors.grey[300],
+              color: isToday ? Colors.blueAccent : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -780,8 +784,8 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
   Widget _buildNoTaskCard(String message) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.withValues(alpha: 0.1))),
-      child: Row(children: [Icon(Icons.wb_sunny_outlined, color: Colors.orange[300], size: 20), const SizedBox(width: 12), Text(message, style: TextStyle(color: Colors.grey[400], fontSize: 14))]),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(15), border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1))),
+      child: Row(children: [Icon(Icons.wb_sunny_outlined, color: Colors.orange[300], size: 20), const SizedBox(width: 12), Text(message, style: TextStyle(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5), fontSize: 14))]),
     );
   }
 
@@ -846,7 +850,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
           ],
         ),
         child: Container(
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))]),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: GestureDetector(
@@ -854,7 +858,7 @@ Widget _buildDashCard(String label, String val, Color color, IconData icon) {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 width: 26, height: 26,
-                decoration: BoxDecoration(color: isCompleted ? Colors.green : Colors.transparent, border: Border.all(color: isCompleted ? Colors.green : Colors.grey[300]!, width: 2), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: isCompleted ? Colors.green : Colors.transparent, border: Border.all(color: isCompleted ? Colors.green : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3), width: 2), shape: BoxShape.circle),
                 child: isCompleted ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
               ),
             ),

@@ -75,21 +75,24 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.surface,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: colorScheme.surface,
             elevation: 0,
             centerTitle: false,
-            title: const Text('My Tasks', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 28)),
+            title: Text('My Tasks', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 28)),
             actions: [
               Container(
                 margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(color: const Color(0xFF2D5AF0).withValues(alpha: 0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: IconButton(
-                  icon: const Icon(Icons.add, color: Color(0xFF2D5AF0), size: 26),
+                  icon: Icon(Icons.add, color: colorScheme.primary, size: 26),
                   onPressed: () => Navigator.of(context).pushNamed('/add-task'),
                 ),
               ),
@@ -162,9 +165,9 @@ class _HomePageState extends State<HomePage> {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+          border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
         ),
         child: SingleChildScrollView(
@@ -207,8 +210,8 @@ class _HomePageState extends State<HomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("PERFORMANCE", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.black87)),
-            Icon(Icons.keyboard_arrow_up_rounded, color: Colors.grey[400]),
+            Text("PERFORMANCE", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
+            Icon(Icons.keyboard_arrow_up_rounded, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
           ],
         ),
         const SizedBox(height: 15),
