@@ -81,7 +81,7 @@ class NotificationViewModel extends ChangeNotifier {
       id: task.id.hashCode,
       title: 'Upcoming Mission',
       body: 'Objective: ${task.title}',
-      taskDueDate: task.dueDate!,
+      scheduledTime: task.dueDate!,
       payload: '{"taskId": "${task.id}", "type": "taskDueReminder"}',
     );
   }
@@ -109,7 +109,7 @@ class NotificationViewModel extends ChangeNotifier {
         id: task.id.hashCode,
         title: 'Objective Updated',
         body: 'New reminder for: ${task.title}',
-        taskDueDate: task.dueDate!,
+        scheduledTime: task.dueDate!,
       );
     }
   }
@@ -204,6 +204,46 @@ class NotificationViewModel extends ChangeNotifier {
 
   void _updateUnreadCount() {
     unreadCount = notifications.where((n) => !n.isRead).length;
+  }
+
+  /// Get unread notifications
+  List<AppNotification> getUnreadNotifications() {
+    return notifications.where((n) => !n.isRead).toList();
+  }
+
+  /// Get notifications by task
+  List<AppNotification> getNotificationsByTask(String taskId) {
+    return notifications.where((n) => n.taskId == taskId).toList();
+  }
+
+  /// Send deadline approaching notification (e.g., 24 hours before)
+  Future<void> sendDeadlineApproachingNotification(Task task) async {
+    if (task.dueDate == null) return;
+
+    // Calculate time 24 hours before due date
+    final deadlineApproachingTime =
+        task.dueDate!.subtract(const Duration(hours: 24));
+
+    // Only schedule if the time is in the future
+    if (deadlineApproachingTime.isAfter(DateTime.now())) {
+      await createNotification(
+        title: 'Deadline Approaching',
+        body: 'Task due tomorrow: ${task.title}',
+        type: NotificationType.taskDeadlineApproaching,
+        taskId: task.id,
+      );
+
+      // Schedule local notification
+      await _notificationService.scheduleNotification(
+        id: (task.id + '_deadline').hashCode,
+        title: 'Deadline Approaching',
+        body: 'Task due tomorrow: ${task.title}',
+        scheduledTime: deadlineApproachingTime,
+        payload: '{"taskId": "${task.id}", "type": "taskDeadlineApproaching"}',
+      );
+
+      debugPrint('✅ Deadline approaching notification scheduled for: ${task.title}');
+    }
   }
 
   @override

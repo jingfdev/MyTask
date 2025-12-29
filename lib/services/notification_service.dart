@@ -14,12 +14,13 @@ class NotificationService {
   GlobalKey<NavigatorState>? _navigatorKey;
 
   final StreamController<Map<String, dynamic>> _notificationTapStream =
-  StreamController<Map<String, dynamic>>.broadcast();
+      StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<RemoteMessage> _messageReceivedStream =
-  StreamController<RemoteMessage>.broadcast();
+      StreamController<RemoteMessage>.broadcast();
 
   static const String _channelName = 'TaskMaster Notifications';
-  static const String _channelDescription = 'Notifications for task reminders and updates';
+  static const String _channelDescription =
+      'Notifications for task reminders and updates';
 
   factory NotificationService() {
     return _instance;
@@ -47,22 +48,25 @@ class NotificationService {
     _navigatorKey = key;
   }
 
-  Stream<Map<String, dynamic>> get notificationTapStream => _notificationTapStream.stream;
-  Stream<RemoteMessage> get messageReceivedStream => _messageReceivedStream.stream;
+  Stream<Map<String, dynamic>> get notificationTapStream =>
+      _notificationTapStream.stream;
+  Stream<RemoteMessage> get messageReceivedStream =>
+      _messageReceivedStream.stream;
 
   Future<void> initialize() async {
     try {
       const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
       const DarwinInitializationSettings initializationSettingsIOS =
-      DarwinInitializationSettings(
+          DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
         requestSoundPermission: false,
       );
 
-      const InitializationSettings initializationSettings = InitializationSettings(
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
         android: initializationSettingsAndroid,
         iOS: initializationSettingsIOS,
       );
@@ -98,12 +102,17 @@ class NotificationService {
 
     if (Platform.isAndroid) {
       final androidPlugin = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
 
+      // Request notification permission
       await androidPlugin?.requestNotificationsPermission();
 
-      final bool? isAllowed = await androidPlugin?.canScheduleExactNotifications();
+      // Request exact alarm permission
+      final bool? isAllowed =
+          await androidPlugin?.canScheduleExactNotifications();
       if (isAllowed == false) {
+        debugPrint('⚠️ Requesting exact alarm permissions...');
         await androidPlugin?.requestExactAlarmsPermission();
       }
     }
@@ -127,16 +136,23 @@ class NotificationService {
     );
 
     await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
   }
 
   Future<void> _initializeFirebaseMessaging() async {
     String? token = await firebaseMessaging.getToken();
-    if (token != null && onTokenGenerated != null) onTokenGenerated!(token);
+    if (token != null && onTokenGenerated != null) {
+      onTokenGenerated!(token);
+      debugPrint('📱 FCM Token: $token');
+    }
 
     firebaseMessaging.onTokenRefresh.listen((newToken) {
-      if (onTokenGenerated != null) onTokenGenerated!(newToken);
+      if (onTokenGenerated != null) {
+        onTokenGenerated!(newToken);
+        debugPrint('🔄 New FCM Token: $newToken');
+      }
     });
 
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -144,6 +160,7 @@ class NotificationService {
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
+    debugPrint('📨 Foreground message received: ${message.notification?.title}');
     if (message.notification != null) {
       showInstantNotification(
         title: message.notification!.title ?? 'New Notification',
@@ -169,7 +186,8 @@ class NotificationService {
     try {
       final Map<String, dynamic> data = jsonDecode(payloadStr);
       if (data.containsKey('route')) {
-        _navigatorKey!.currentState?.pushNamed(data['route'] as String, arguments: data);
+        _navigatorKey!.currentState
+            ?.pushNamed(data['route'] as String, arguments: data);
       } else if (data.containsKey('taskId')) {
         _navigatorKey!.currentState?.pushNamed('/tasks', arguments: data);
       }
@@ -178,12 +196,12 @@ class NotificationService {
     }
   }
 
-  /// --- UPDATED: Schedule based on task deadline and user settings ---
+  /// Schedule a notification at a specific time
   Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
-    required DateTime taskDueDate, // Input the actual task deadline
+    required DateTime scheduledTime, // The time to show the notification
     String? payload,
   }) async {
     try {
@@ -191,30 +209,29 @@ class NotificationService {
 
       // 1. Check if reminders are globally enabled
       final bool enabled = prefs.getBool('reminder_enabled') ?? true;
-      if (!enabled) return;
-
-      // 2. Fetch user's advance notice preference (default to 30 mins)
-      final int advanceNotice = prefs.getInt('advance_notice_minutes') ?? 30;
-
-      // 3. Calculate reminder time
-      DateTime scheduledTime = taskDueDate.subtract(Duration(minutes: advanceNotice));
-
-      // 4. SAFETY CATCH-UP: If time is in the past, notify in 5 seconds
-      if (scheduledTime.isBefore(DateTime.now())) {
-        debugPrint('⚠️ Intended reminder time was in the past. Triggering 5s catch-up.');
-        scheduledTime = DateTime.now().add(const Duration(seconds: 5));
+      if (!enabled) {
+        debugPrint('⚠️ Reminders disabled globally. Skipping notification.');
+        return;
       }
 
-      // 5. Android Exact Alarm Permission Check
+      // 2. Validate the scheduled time
+      DateTime finalScheduledTime = scheduledTime;
+      if (scheduledTime.isBefore(DateTime.now())) {
+        debugPrint(
+            '⚠️ Scheduled time is in the past. Using immediate notification.');
+        finalScheduledTime = DateTime.now().add(const Duration(seconds: 2));
+      }
+
+      // 3. Check Android permissions
       if (Platform.isAndroid) {
         final androidPlugin = flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
 
-        final bool? canSchedule = await androidPlugin?.canScheduleExactNotifications();
+        final bool? canSchedule =
+            await androidPlugin?.canScheduleExactNotifications();
         if (canSchedule == false) {
-          debugPrint('⚠️ Exact alarms not permitted.');
-          await androidPlugin?.requestExactAlarmsPermission();
-          return;
+          debugPrint('⚠️ Cannot schedule exact notifications.');
         }
       }
 
@@ -222,11 +239,14 @@ class NotificationService {
       final bool vib = prefs.getBool('reminder_vibration') ?? true;
       final String dynamicId = await _getDynamicChannelId();
 
+      debugPrint(
+          '⏰ Scheduling notification - ID: $id, Title: $title, Time: $finalScheduledTime');
+
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
         body,
-        tz.TZDateTime.from(scheduledTime, tz.local),
+        tz.TZDateTime.from(finalScheduledTime, tz.local),
         NotificationDetails(
           android: AndroidNotificationDetails(
             dynamicId,
@@ -241,16 +261,18 @@ class NotificationService {
           iOS: const DarwinNotificationDetails(),
         ),
         uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
+            UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
-      debugPrint('✅ Reminder set for $scheduledTime (Due: $taskDueDate)');
-    } catch (e) {
+      debugPrint('✅ Notification scheduled successfully for: $finalScheduledTime');
+    } catch (e, stackTrace) {
       debugPrint('❌ Error scheduling notification: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
+  /// Show a notification immediately
   Future<void> showInstantNotification({
     required String title,
     required String body,
@@ -262,6 +284,8 @@ class NotificationService {
       final prefs = await SharedPreferences.getInstance();
       final bool sound = prefs.getBool('reminder_sound') ?? true;
       final bool vib = prefs.getBool('reminder_vibration') ?? true;
+
+      debugPrint('🔔 Showing instant notification - Title: $title, Body: $body');
 
       await flutterLocalNotificationsPlugin.show(
         id ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -282,16 +306,36 @@ class NotificationService {
         ),
         payload: payload != null ? jsonEncode(payload) : null,
       );
-    } catch (e) {
+      debugPrint('✅ Instant notification shown successfully');
+    } catch (e, stackTrace) {
       debugPrint('❌ Error showing notification: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
-  Future<void> cancelNotification(int id) async =>
+  /// Cancel a scheduled notification
+  Future<void> cancelNotification(int id) async {
+    try {
       await flutterLocalNotificationsPlugin.cancel(id);
+      debugPrint('🗑️ Notification $id cancelled');
+    } catch (e) {
+      debugPrint('❌ Error cancelling notification: $e');
+    }
+  }
+
+  /// Cancel all scheduled notifications
+  Future<void> cancelAllNotifications() async {
+    try {
+      await flutterLocalNotificationsPlugin.cancelAll();
+      debugPrint('🗑️ All notifications cancelled');
+    } catch (e) {
+      debugPrint('❌ Error cancelling all notifications: $e');
+    }
+  }
 
   void dispose() {
     _notificationTapStream.close();
     _messageReceivedStream.close();
   }
 }
+
