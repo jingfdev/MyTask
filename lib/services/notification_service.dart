@@ -54,31 +54,42 @@ class NotificationService {
   Stream<RemoteMessage> get messageReceivedStream =>
       _messageReceivedStream.stream;
 
+  /// Initialize notifications
+  /// This method sets up local and Firebase messaging
   Future<void> initialize() async {
     try {
+      // Verify timezone is initialized before anything else
+      if (tz.local.name == 'UTC' || tz.local.name.isEmpty) {
+        debugPrint('⚠️ WARNING: Timezone may not be properly initialized!');
+        debugPrint('   Current timezone: ${tz.local.name}');
+        debugPrint('   This may prevent scheduled notifications from firing.');
+      } else {
+        debugPrint('✅ Timezone verified: ${tz.local.name}');
+      }
+
       // Skip local notifications initialization on web (not supported)
       if (!kIsWeb) {
         // Initialize local notifications
         const AndroidInitializationSettings initializationSettingsAndroid =
             AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      const DarwinInitializationSettings initializationSettingsIOS =
-          DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
+        const DarwinInitializationSettings initializationSettingsIOS =
+            DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
-      const InitializationSettings initializationSettings =
-          InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsIOS,
-      );
+        const InitializationSettings initializationSettings =
+            InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
-      await flutterLocalNotificationsPlugin.initialize(
-        initializationSettings,
-        onDidReceiveNotificationResponse: _onNotificationTap,
-      );
+        await flutterLocalNotificationsPlugin.initialize(
+          initializationSettings,
+          onDidReceiveNotificationResponse: _onNotificationTap,
+        );
       }
 
       await _requestPermissions();
@@ -221,10 +232,12 @@ class NotificationService {
 
       // 2. Validate the scheduled time
       DateTime finalScheduledTime = scheduledTime;
-      if (scheduledTime.isBefore(DateTime.now())) {
+      final now = DateTime.now();
+
+      if (scheduledTime.isBefore(now)) {
         debugPrint(
-            '⚠️ Scheduled time is in the past. Using immediate notification.');
-        finalScheduledTime = DateTime.now().add(const Duration(seconds: 2));
+            '⚠️ Scheduled time ($scheduledTime) is in the past (now: $now). Using immediate notification.');
+        finalScheduledTime = now.add(const Duration(seconds: 2));
       }
 
       // 3. Check Android permissions
@@ -236,7 +249,7 @@ class NotificationService {
         final bool? canSchedule =
             await androidPlugin?.canScheduleExactNotifications();
         if (canSchedule == false) {
-          debugPrint('⚠️ Cannot schedule exact notifications.');
+          debugPrint('⚠️ Cannot schedule exact notifications. Falling back to inexact.');
         }
       }
 
@@ -245,10 +258,18 @@ class NotificationService {
       final String dynamicId = await _getDynamicChannelId();
 
       debugPrint(
-          '⏰ Scheduling notification - ID: $id, Title: $title, Time: $finalScheduledTime');
+          '⏰ [NOTIFICATION SCHEDULING] ID: $id, Title: "$title", Body: "$body"');
+      debugPrint('⏰ Scheduled for: $finalScheduledTime');
+      debugPrint('⏰ Current time: $now');
+      debugPrint('⏰ Time difference: ${finalScheduledTime.difference(now).inMinutes} minutes');
+
+      // Ensure timezone is properly initialized
+      if (tz.local.name == 'UTC') {
+        debugPrint('⚠️ WARNING: Timezone is still UTC! This may prevent notifications from firing.');
+      }
 
       final tzScheduledTime = tz.TZDateTime.from(finalScheduledTime, tz.local);
-      debugPrint('⏰ TZDateTime: $tzScheduledTime (local: ${tz.local.name})');
+      debugPrint('⏰ TZDateTime: $tzScheduledTime (timezone: ${tz.local.name})');
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -272,6 +293,7 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dateAndTime,
       );
       debugPrint('✅ Notification scheduled successfully for: $finalScheduledTime');
     } catch (e, stackTrace) {
@@ -341,9 +363,21 @@ class NotificationService {
     }
   }
 
+  /// DEBUG: List all pending notifications
+  Future<void> debugListPendingNotifications() async {
+    try {
+      final pendingNotifications = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      debugPrint('🔍 [DEBUG] Pending notifications count: ${pendingNotifications.length}');
+      for (var notif in pendingNotifications) {
+        debugPrint('  - ID: ${notif.id}, Title: ${notif.title}, Body: ${notif.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error listing pending notifications: $e');
+    }
+  }
+
   void dispose() {
     _notificationTapStream.close();
     _messageReceivedStream.close();
   }
 }
-

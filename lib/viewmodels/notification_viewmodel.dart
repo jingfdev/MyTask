@@ -235,7 +235,7 @@ class NotificationViewModel extends ChangeNotifier {
 
       // Schedule local notification
       await _notificationService.scheduleNotification(
-        id: (task.id + '_deadline').hashCode,
+        id: '${task.id}_deadline'.hashCode,
         title: 'Deadline Approaching',
         body: 'Task due tomorrow: ${task.title}',
         scheduledTime: deadlineApproachingTime,

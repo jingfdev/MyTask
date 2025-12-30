@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -185,6 +187,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         value: themeVm.isDarkMode,
                         onChanged: (value) async {
                           await themeVm.toggleDarkMode(value: value);
+                          if (!mounted) return;
+                          // ignore: use_build_context_synchronously
                           _showSnackBar(
                             context,
                             value ? 'Dark mode enabled' : 'Dark mode disabled',
@@ -473,9 +477,12 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         await userViewModel.migrateGuestTasksToFirestore();
 
         // 🔄 Reload tasks after migration
-        if (context.mounted) {
+        if (mounted) {
+          // ignore: use_build_context_synchronously
           await context.read<TaskViewModel>().fetchTasks();
 
+          if (!mounted) return;
+          // ignore: use_build_context_synchronously
           _showSnackBar(
             context,
             'Google account linked successfully!',
@@ -484,7 +491,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
       }
 
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
+        // ignore: use_build_context_synchronously
         _showSnackBar(
           context,
           'Failed to link Google account. Please try again.',
