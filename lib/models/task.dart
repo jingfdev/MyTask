@@ -15,11 +15,41 @@ class Task {
     this.dueDate,
   });
 
-  /// Create Task from Firestore document
-  factory Task.fromMap(Map<String, dynamic> data, String id) {
-    DateTime? parsedDueDate;
+  /// Helper method for updating tasks
+  Task copyWith({
+    String? id,
+    String? title,
+    String? description,
+    bool? isCompleted,
+    DateTime? createdAt,
+    DateTime? dueDate,
+  }) {
+    return Task(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      isCompleted: isCompleted ?? this.isCompleted,
+      createdAt: createdAt ?? this.createdAt,
+      dueDate: dueDate ?? this.dueDate,
+    );
+  }
 
+  /// 🔄 FROM MAP (Firestore + Local Safe)
+  factory Task.fromMap(Map<String, dynamic> data, String id) {
+    // ---- createdAt (safe)
+    DateTime createdAt;
+    final rawCreatedAt = data['createdAt'];
+
+    if (rawCreatedAt is String && rawCreatedAt.isNotEmpty) {
+      createdAt = DateTime.tryParse(rawCreatedAt) ?? DateTime.now();
+    } else {
+      createdAt = DateTime.now();
+    }
+
+    // ---- dueDate (safe & optional)
+    DateTime? parsedDueDate;
     final rawDueDate = data['dueDate'];
+
     if (rawDueDate is String && rawDueDate.isNotEmpty) {
       parsedDueDate = DateTime.tryParse(rawDueDate);
     }
@@ -29,12 +59,12 @@ class Task {
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       isCompleted: data['isCompleted'] ?? false,
-      createdAt: DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt: createdAt,
       dueDate: parsedDueDate,
     );
   }
 
-  /// Convert Task to Firestore map
+  /// 🔄 TO MAP (Firestore + Local)
   Map<String, dynamic> toMap() {
     return {
       'title': title,

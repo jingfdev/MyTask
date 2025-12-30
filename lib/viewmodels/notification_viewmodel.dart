@@ -17,26 +17,20 @@ class NotificationViewModel extends ChangeNotifier {
     _initialize();
   }
 
-  /// Initialize notification listeners
   void _initialize() {
-    // Listen to notification taps
     _notificationService.notificationTapStream.listen((notification) {
       _handleNotificationTap(notification);
     });
 
-    // Listen to incoming FCM messages
     _notificationService.messageReceivedStream.listen((message) {
-      print('📬 New FCM message: ${message.messageId}');
+      debugPrint('📬 New FCM message: ${message.messageId}');
     });
   }
 
-  /// Handle notification tap
   void _handleNotificationTap(Map<String, dynamic> notification) {
-    print('Notification tapped: $notification');
-    // This can be used to navigate to relevant task details
+    debugPrint('Notification tapped: $notification');
   }
 
-  /// Create and save a notification
   Future<void> createNotification({
     required String title,
     required String body,
@@ -59,21 +53,13 @@ class NotificationViewModel extends ChangeNotifier {
         payload: payload,
       );
 
-      // Save to Firestore
-      await _db
-          .collection('notifications')
-          .doc(id)
-          .set(notification.toMap());
-
-      print('✅ Notification created: $title');
+      await _db.collection('notifications').doc(id).set(notification.toMap());
     } catch (e) {
-      print('❌ Error creating notification: $e');
+      debugPrint('❌ Error creating notification record: $e');
     }
   }
 
-  /// Send task created notification
   Future<void> sendTaskCreatedNotification(Task task) async {
-    // Create in-app notification
     await createNotification(
       title: 'Task Created',
       body: 'New task: ${task.title}',
@@ -81,7 +67,6 @@ class NotificationViewModel extends ChangeNotifier {
       taskId: task.id,
     );
 
-    // Show local notification
     await _notificationService.showInstantNotification(
       title: 'Task Created',
       body: task.title,
@@ -89,28 +74,146 @@ class NotificationViewModel extends ChangeNotifier {
     );
   }
 
-  /// Send task due date reminder notification
   Future<void> sendTaskDueReminder(Task task) async {
     if (task.dueDate == null) return;
 
-    // Schedule notification for due date
-    final notificationTime = task.dueDate!;
+    await _notificationService.scheduleNotification(
+      id: task.id.hashCode,
+      title: 'Upcoming Mission',
+      body: 'Objective: ${task.title}',
+      scheduledTime: task.dueDate!,
+      payload: '{"taskId": "${task.id}", "type": "taskDueReminder"}',
+    );
+  }
 
+  Future<void> sendTaskCompletedNotification(Task task) async {
     await createNotification(
-      title: 'Task Due Reminder',
-      body: 'Task due: ${task.title}',
-      type: NotificationType.taskDueReminder,
+      title: 'Task Completed',
+      body: 'Great job! ${task.title} is completed.',
+      type: NotificationType.taskCompleted,
       taskId: task.id,
     );
 
-    // Schedule local notification
-    await _notificationService.scheduleNotification(
-      id: task.id.hashCode,
-      title: 'Task Due Reminder',
-      body: task.title,
-      scheduledTime: notificationTime,
-      payload: '{"taskId": "${task.id}", "type": "taskDueReminder"}',
+    await _notificationService.showInstantNotification(
+      title: 'Objective Secured',
+      body: 'Completed: ${task.title}',
+      payload: {'taskId': task.id, 'type': 'taskCompleted'},
     );
+
+    await _notificationService.cancelNotification(task.id.hashCode);
+  }
+
+  Future<void> sendTaskUpdatedNotification(Task task) async {
+    if (task.dueDate != null && !task.isCompleted) {
+      await _notificationService.scheduleNotification(
+        id: task.id.hashCode,
+        title: 'Objective Updated',
+        body: 'New reminder for: ${task.title}',
+        scheduledTime: task.dueDate!,
+      );
+    }
+  }
+
+  // --- Firestore & List Management ---
+
+  Future<void> fetchNotifications() async {
+    try {
+      final snapshot = await _db
+          .collection('notifications')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      notifications = snapshot.docs
+          .map((doc) => AppNotification.fromMap(doc.data(), doc.id))
+          .toList();
+
+      _updateUnreadCount();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error fetching notifications: $e');
+    }
+  }
+
+  Future<void> markAsRead(String notificationId) async {
+    try {
+      await _db.collection('notifications').doc(notificationId).update({'isRead': true});
+      final index = notifications.indexWhere((n) => n.id == notificationId);
+      if (index >= 0) {
+        notifications[index] = notifications[index].copyWith(isRead: true);
+        _updateUnreadCount();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('❌ Error marking read: $e');
+    }
+  }
+
+  Future<void> markAllAsRead() async {
+    try {
+      final WriteBatch batch = _db.batch();
+      final unreadNotifications = notifications.where((n) => !n.isRead).toList();
+
+      for (var n in unreadNotifications) {
+        batch.update(_db.collection('notifications').doc(n.id), {'isRead': true});
+      }
+
+      await batch.commit();
+      // Update local state instead of re-fetching for better performance
+      for (int i = 0; i < notifications.length; i++) {
+        notifications[i] = notifications[i].copyWith(isRead: true);
+      }
+      _updateUnreadCount();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error marking all read: $e');
+    }
+  }
+
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _db.collection('notifications').doc(notificationId).delete();
+      notifications.removeWhere((n) => n.id == notificationId);
+      _updateUnreadCount();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error deleting notification: $e');
+    }
+  }
+
+  // --- ADDED THIS METHOD TO FIX YOUR ERROR ---
+  Future<void> deleteAllNotifications() async {
+    try {
+      final WriteBatch batch = _db.batch();
+
+      // Add all current notifications to the deletion batch
+      for (var n in notifications) {
+        batch.delete(_db.collection('notifications').doc(n.id));
+      }
+
+      await batch.commit();
+
+      // Clear local list
+      notifications.clear();
+      _updateUnreadCount();
+      notifyListeners();
+      debugPrint('✅ All notifications deleted from Firestore');
+    } catch (e) {
+      debugPrint('❌ Error deleting all notifications: $e');
+    }
+  }
+
+  void _updateUnreadCount() {
+    unreadCount = notifications.where((n) => !n.isRead).length;
+  }
+
+  /// Get unread notifications
+  List<AppNotification> getUnreadNotifications() {
+    return notifications.where((n) => !n.isRead).toList();
+  }
+
+  /// Get notifications by task
+  List<AppNotification> getNotificationsByTask(String taskId) {
+    return notifications.where((n) => n.taskId == taskId).toList();
   }
 
   /// Send deadline approaching notification (e.g., 24 hours before)
@@ -136,137 +239,11 @@ class NotificationViewModel extends ChangeNotifier {
         title: 'Deadline Approaching',
         body: 'Task due tomorrow: ${task.title}',
         scheduledTime: deadlineApproachingTime,
-        payload:
-            '{"taskId": "${task.id}", "type": "taskDeadlineApproaching"}',
+        payload: '{"taskId": "${task.id}", "type": "taskDeadlineApproaching"}',
       );
 
-      print('✅ Deadline approaching notification scheduled for: $task.title');
+      debugPrint('✅ Deadline approaching notification scheduled for: ${task.title}');
     }
-  }
-
-  /// Send task completed notification
-  Future<void> sendTaskCompletedNotification(Task task) async {
-    await createNotification(
-      title: 'Task Completed',
-      body: 'Great job! ${task.title} is completed.',
-      type: NotificationType.taskCompleted,
-      taskId: task.id,
-    );
-
-    await _notificationService.showInstantNotification(
-      title: 'Task Completed',
-      body: 'Great job! ${task.title}',
-      payload: {'taskId': task.id, 'type': 'taskCompleted'},
-    );
-  }
-
-  /// Send task updated notification
-  Future<void> sendTaskUpdatedNotification(Task task) async {
-    await createNotification(
-      title: 'Task Updated',
-      body: 'Task updated: ${task.title}',
-      type: NotificationType.taskUpdated,
-      taskId: task.id,
-    );
-
-    await _notificationService.showInstantNotification(
-      title: 'Task Updated',
-      body: task.title,
-      payload: {'taskId': task.id, 'type': 'taskUpdated'},
-    );
-  }
-
-  /// Fetch all notifications
-  Future<void> fetchNotifications() async {
-    try {
-      final snapshot = await _db
-          .collection('notifications')
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      notifications = snapshot.docs
-          .map((doc) => AppNotification.fromMap(doc.data(), doc.id))
-          .toList();
-
-      _updateUnreadCount();
-      notifyListeners();
-    } catch (e) {
-      print('❌ Error fetching notifications: $e');
-    }
-  }
-
-  /// Mark notification as read
-  Future<void> markAsRead(String notificationId) async {
-    try {
-      await _db.collection('notifications').doc(notificationId).update({
-        'isRead': true,
-      });
-
-      // Update local list
-      final index =
-          notifications.indexWhere((n) => n.id == notificationId);
-      if (index >= 0) {
-        notifications[index] = notifications[index].copyWith(isRead: true);
-        _updateUnreadCount();
-        notifyListeners();
-      }
-    } catch (e) {
-      print('❌ Error marking notification as read: $e');
-    }
-  }
-
-  /// Mark all notifications as read
-  Future<void> markAllAsRead() async {
-    try {
-      for (var notification in notifications) {
-        if (!notification.isRead) {
-          await markAsRead(notification.id);
-        }
-      }
-    } catch (e) {
-      print('❌ Error marking all as read: $e');
-    }
-  }
-
-  /// Delete notification
-  Future<void> deleteNotification(String notificationId) async {
-    try {
-      await _db.collection('notifications').doc(notificationId).delete();
-      notifications.removeWhere((n) => n.id == notificationId);
-      _updateUnreadCount();
-      notifyListeners();
-    } catch (e) {
-      print('❌ Error deleting notification: $e');
-    }
-  }
-
-  /// Delete all notifications
-  Future<void> deleteAllNotifications() async {
-    try {
-      for (var notification in notifications) {
-        await _db.collection('notifications').doc(notification.id).delete();
-      }
-      notifications.clear();
-      _updateUnreadCount();
-      notifyListeners();
-    } catch (e) {
-      print('❌ Error deleting all notifications: $e');
-    }
-  }
-
-  /// Update unread count
-  void _updateUnreadCount() {
-    unreadCount = notifications.where((n) => !n.isRead).length;
-  }
-
-  /// Get notifications by task
-  List<AppNotification> getNotificationsByTask(String taskId) {
-    return notifications.where((n) => n.taskId == taskId).toList();
-  }
-
-  /// Get unread notifications
-  List<AppNotification> getUnreadNotifications() {
-    return notifications.where((n) => !n.isRead).toList();
   }
 
   @override
@@ -275,4 +252,3 @@ class NotificationViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
-
