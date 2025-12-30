@@ -31,8 +31,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 /// Background message handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-<<<<<<< HEAD
-  print('Handling background message: ${message.messageId}');
+  debugPrint('Handling background message: ${message.messageId}');
 
   // Show notification even in background
   if (message.notification != null) {
@@ -45,32 +44,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase
-=======
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-}
-
-<<<<<<< HEAD
-  // Initialize notifications
-   await NotificationService().initialize();
-
-  // Set up background message handler (not supported on web)
-  if (!kIsWeb) {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  }
-=======
-void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
     // Initialize timezone database
     tz.initializeTimeZones();
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
 
     // Set local timezone - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
     final String timeZoneName = await FlutterTimezone.getLocalTimezone();

@@ -5,15 +5,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
-<<<<<<< HEAD
-    <!-- ...existing code... -->
     <application
         android:label="mytask_project"
-=======
-    <application
-        android:label="@string/app_name"
-        android:name="${applicationName}"
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
         android:icon="@mipmap/ic_launcher">
 
         <activity

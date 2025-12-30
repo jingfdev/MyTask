@@ -4,11 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/timezone.dart' as tz;
-<<<<<<< HEAD
 import 'package:flutter/foundation.dart' show kIsWeb;
-=======
 import 'package:shared_preferences/shared_preferences.dart';
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
 import 'dart:async';
 
 class NotificationService {
@@ -58,27 +55,18 @@ class NotificationService {
       _messageReceivedStream.stream;
 
   Future<void> initialize() async {
-<<<<<<< HEAD
-    // Skip local notifications initialization on web (not supported)
-    if (!kIsWeb) {
-      // Initialize local notifications
-=======
     try {
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      // Skip local notifications initialization on web (not supported)
+      if (!kIsWeb) {
+        // Initialize local notifications
+        const AndroidInitializationSettings initializationSettingsAndroid =
+            AndroidInitializationSettings('@mipmap/ic_launcher');
 
       const DarwinInitializationSettings initializationSettingsIOS =
           DarwinInitializationSettings(
-<<<<<<< HEAD
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
-=======
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
       );
 
       const InitializationSettings initializationSettings =
@@ -91,10 +79,7 @@ class NotificationService {
         initializationSettings,
         onDidReceiveNotificationResponse: _onNotificationTap,
       );
-<<<<<<< HEAD
-    }
-=======
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
+      }
 
       await _requestPermissions();
       await _createNotificationChannel();

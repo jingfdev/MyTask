@@ -17,7 +17,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.59"
-<<<<<<< HEAD
   analyzer:
     dependency: transitive
     description:
@@ -26,7 +25,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.0.0"
-=======
   archive:
     dependency: transitive
     description:
@@ -35,7 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.7"
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
   args:
     dependency: transitive
     description:
@@ -124,8 +121,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.4"
-<<<<<<< HEAD
-=======
   cli_util:
     dependency: transitive
     description:
@@ -134,7 +129,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.2"
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
   clock:
     dependency: transitive
     description:
@@ -183,16 +177,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
-<<<<<<< HEAD
-  convert:
-    dependency: transitive
-    description:
-      name: convert
-      sha256: b30acd5944035672bc15c6b7a8b47d773e41e2f17de064350988c5d02adb1c68
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.2"
-=======
   confetti:
     dependency: "direct main"
     description:
@@ -201,7 +185,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.8.0"
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
+  convert:
+    dependency: transitive
+    description:
+      name: convert
+      sha256: b30acd5944035672bc15c6b7a8b47d773e41e2f17de064350988c5d02adb1c68
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.2"
   crypto:
     dependency: transitive
     description:
@@ -513,7 +504,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.19.0"
-<<<<<<< HEAD
   io:
     dependency: transitive
     description:
@@ -522,8 +512,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-=======
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
   json_annotation:
     dependency: transitive
     description:
@@ -732,7 +720,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
-<<<<<<< HEAD
   pool:
     dependency: transitive
     description:
@@ -741,7 +728,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.2"
-=======
   posix:
     dependency: transitive
     description:
@@ -750,7 +736,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
   provider:
     dependency: "direct main"
     description:
@@ -759,7 +744,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.5+1"
-<<<<<<< HEAD
   pub_semver:
     dependency: transitive
     description:
@@ -776,23 +760,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
-  shelf:
-    dependency: transitive
-    description:
-      name: shelf
-      sha256: e7dd780a7ffb623c57850b33f43309312fc863fb6aa3d276a754bb299839ef12
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.2"
-  shelf_web_socket:
-    dependency: transitive
-    description:
-      name: shelf_web_socket
-      sha256: "3632775c8e90d6c9712f883e633716432a27758216dfb61bd86a8321c0580925"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.0"
-=======
   shared_preferences:
     dependency: "direct main"
     description:
@@ -849,7 +816,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.1"
->>>>>>> c0190bba8521fcaa9ca34e8ce1aa4a4b27052fdf
+  shelf:
+    dependency: transitive
+    description:
+      name: shelf
+      sha256: e7dd780a7ffb623c57850b33f43309312fc863fb6aa3d276a754bb299839ef12
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.2"
+  shelf_web_socket:
+    dependency: transitive
+    description:
+      name: shelf_web_socket
+      sha256: "3632775c8e90d6c9712f883e633716432a27758216dfb61bd86a8321c0580925"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   simple_gesture_detector:
     dependency: transitive
     description:
