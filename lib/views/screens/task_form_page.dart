@@ -110,71 +110,109 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Widget _buildHeaderSection(ColorScheme colorScheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            widget.task == null ? "NEW MISSION" : "EDIT TASK",
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w900,
-              fontSize: 11,
-              letterSpacing: 1.5,
-            ),
+          child: Icon(
+            widget.task == null ? Icons.add_task_rounded : Icons.edit_note_rounded,
+            color: colorScheme.primary,
+            size: 32,
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          widget.task == null
-              ? "What's on your\nmind?"
-              : "Refine your\nobjective",
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            height: 1.1,
-          ),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.task == null ? "New Task" : "Edit Task",
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              widget.task == null ? "What needs to be done?" : "Update your plan",
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildMainInputs(ColorScheme colorScheme) {
-    return Column(
-      children: [
-        TextField(
-          controller: _titleController,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          TextField(
+            controller: _titleController,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              hintText: "Task Title",
+              hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4)),
+              border: InputBorder.none,
+              prefixIcon: Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.title_rounded, color: colorScheme.primary, size: 20),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
           ),
-          decoration: InputDecoration(
-            hintText: "Task Title",
-            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
           ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _descriptionController,
-          maxLines: 4,
-          style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
-          decoration: InputDecoration(
-            hintText: "Add notes or sub-tasks...",
-            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
-            border: InputBorder.none,
+          TextField(
+            controller: _descriptionController,
+            maxLines: 5,
+            minLines: 3,
+            style: TextStyle(
+              fontSize: 16,
+              color: colorScheme.onSurface.withValues(alpha: 0.8),
+              height: 1.5,
+            ),
+            decoration: InputDecoration(
+              hintText: "Add description, notes, or sub-tasks...",
+              hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4)),
+              border: InputBorder.none,
+              prefixIcon: Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(right: 12, bottom: 40), // Align to top
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.description_rounded, color: colorScheme.secondary, size: 20),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -182,178 +220,263 @@ class _TaskFormPageState extends State<TaskFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.calendar_month_rounded, size: 18,
-                color: colorScheme.onSurface.withValues(alpha: 0.4)),
-            const SizedBox(width: 8),
-            Text(
-              "DUE DATE",
-              style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-                letterSpacing: 1,
-              ),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            "DUE DATE",
+            style: TextStyle(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              letterSpacing: 1.2,
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            _buildPickerTile(
-              colorScheme: colorScheme,
-              label: "Date",
-              value: DateFormat('EEE, MMM dd').format(_selectedDate!),
-              icon: Icons.today_rounded,
-              onTap: () => _pickDate(context),
-            ),
-            const SizedBox(width: 16),
-            _buildPickerTile(
-              colorScheme: colorScheme,
-              label: "Time",
-              value: _selectedTime!.format(context),
-              icon: Icons.access_time_filled_rounded,
-              onTap: () => _pickTime(context),
-            ),
-          ],
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colorScheme.outlineVariant),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildDateTimeTile(
+                  context,
+                  label: "Date",
+                  value: DateFormat('EEE, MMM dd').format(_selectedDate!),
+                  icon: Icons.calendar_today_rounded,
+                  onTap: () => _pickDate(context),
+                  colorScheme: colorScheme,
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: colorScheme.outlineVariant,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              Expanded(
+                child: _buildDateTimeTile(
+                  context,
+                  label: "Time",
+                  value: _selectedTime!.format(context),
+                  icon: Icons.access_time_rounded,
+                  onTap: () => _pickTime(context),
+                  colorScheme: colorScheme,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
   Widget _buildReminderSection(ColorScheme colorScheme) {
+    bool hasReminder = _reminderDate != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.notifications_active_rounded, size: 18,
-                color: colorScheme.onSurface.withValues(alpha: 0.4)),
-            const SizedBox(width: 8),
-            Text(
-              "REMINDER (OPTIONAL)",
-              style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-                letterSpacing: 1,
-              ),
-            ),
-            const Spacer(),
-            if (_reminderDate != null)
-              IconButton(
-                icon: Icon(Icons.close, size: 18, color: colorScheme.error),
-                onPressed: () {
-                  setState(() {
-                    _reminderDate = null;
-                    _reminderTime = null;
-                  });
-                },
-              ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        if (_reminderDate == null)
-          GestureDetector(
-            onTap: () => _pickReminderDate(context),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: 0.1),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Row(
+            children: [
+              Text(
+                "REMINDER",
+                style: TextStyle(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  letterSpacing: 1.2,
                 ),
               ),
-              child: Center(
-                child: Text(
-                  "+ Add Reminder",
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w700,
+              const Spacer(),
+              if (hasReminder)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _reminderDate = null;
+                      _reminderTime = null;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.close, size: 14, color: colorScheme.error),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Remove",
+                          style: TextStyle(
+                            color: colorScheme.error,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+            ],
+          ),
+        ),
+
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: hasReminder ? colorScheme.primaryContainer.withValues(alpha: 0.2) : colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: hasReminder ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
             ),
-          )
-        else
-          Row(
-            children: [
-              _buildPickerTile(
-                colorScheme: colorScheme,
-                label: "Date",
-                value: DateFormat('EEE, MMM dd').format(_reminderDate!),
-                icon: Icons.event_available_rounded,
-                onTap: () => _pickReminderDate(context),
-              ),
-              const SizedBox(width: 16),
-              _buildPickerTile(
-                colorScheme: colorScheme,
-                label: "Time",
-                value: _reminderTime!.format(context),
-                icon: Icons.notifications_none_rounded,
-                onTap: () => _pickReminderTime(context),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
+          child: hasReminder
+              ? Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildDateTimeTile(
+                    context,
+                    label: "Date",
+                    value: DateFormat('MMM dd').format(_reminderDate!),
+                    icon: Icons.notifications_active_rounded,
+                    onTap: () => _pickReminderDate(context),
+                    colorScheme: colorScheme,
+                    isActive: true,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: colorScheme.primary.withValues(alpha: 0.3),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                Expanded(
+                  child: _buildDateTimeTile(
+                    context,
+                    label: "Time",
+                    value: _reminderTime!.format(context),
+                    icon: Icons.access_time_filled_rounded,
+                    onTap: () => _pickReminderTime(context),
+                    colorScheme: colorScheme,
+                    isActive: true,
+                  ),
+                ),
+              ],
+            ),
+          )
+              : InkWell(
+            onTap: () => _pickReminderDate(context),
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.add_alert_rounded, color: colorScheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Set a specific reminder time",
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildPickerTile({
-    required ColorScheme colorScheme,
-    required String label,
-    required String value,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(20),
-border: Border.all(
-  color: colorScheme.outline.withValues(alpha: 0.1),
-),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDateTimeTile(
+      BuildContext context, {
+        required String label,
+        required String value,
+        required IconData icon,
+        required VoidCallback onTap,
+        required ColorScheme colorScheme,
+        bool isActive = false,
+      }) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Icon(icon, size: 20, color: colorScheme.primary),
-              const SizedBox(height: 12),
+              Icon(
+                  icon,
+                  size: 16,
+                  color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant
+              ),
+              const SizedBox(width: 6),
               Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: colorScheme.onSurface.withValues(alpha: 0.5),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  color: isActive ? colorScheme.primary.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 22),
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isActive ? colorScheme.primary : colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-Widget _buildBottomActionButton(ColorScheme colorScheme) {
+  Widget _buildBottomActionButton(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
       decoration: BoxDecoration(
@@ -375,7 +498,7 @@ Widget _buildBottomActionButton(ColorScheme colorScheme) {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-shadowColor: colorScheme.primary.withValues(alpha: 0.4),
+            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
           ),
           child: _isLoading
               ? CircularProgressIndicator(color: colorScheme.onPrimary)
