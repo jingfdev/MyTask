@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_ui_auth: ^1.1.20
+  firebase_ui_oauth_google: ^1.1.20
   shared_preferences: ^2.2.2
   cupertino_icons: ^1.0.8
   provider: ^6.1.0
@@ -20,7 +22,7 @@ dependencies:
   timezone: ^0.9.2
   flutter_timezone: ^3.0.1
   table_calendar: ^3.1.2
-  intl: ^0.19.0
+  intl: ^0.20.2
   uuid: ^4.0.0
   flutter_launcher_icons: ^0.13.1
   firebase_core: ^3.6.0

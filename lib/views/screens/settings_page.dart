@@ -3,11 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 import 'package:mytask_project/viewmodels/theme_viewmodel.dart';
-
+import 'package:intl/intl.dart';
 import '../../viewmodels/task_viewmodel.dart';
 import 'reminder_settings_page.dart';
+import 'profile_page.dart'; // Add this import
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -78,16 +80,15 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               elevation: 0,
               pinned: true,
               floating: false,
-              // FIXED: Simplified leading to ensure IconButton works perfectly
               leading: Center(
                 child: Container(
                   margin: const EdgeInsets.only(left: 8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colorScheme.surface.withValues(alpha: 0.8),
+                    color: colorScheme.surface.withOpacity(0.8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -97,11 +98,9 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     icon: const Icon(Icons.arrow_back),
                     color: colorScheme.onSurface,
                     onPressed: () {
-                      // Force the pop on the root navigator
                       if (Navigator.of(context).canPop()) {
                         Navigator.of(context).pop();
                       } else {
-                        // Fallback if the stack is somehow empty
                         Navigator.pushReplacementNamed(context, '/home');
                       }
                     },
@@ -138,8 +137,15 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     context: context,
                     icon: Icons.person_outline,
                     title: 'Profile',
-                    subtitle: 'Update your personal information',
-                    onTap: () {},
+                    subtitle: 'View your personal information',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
+                        ),
+                      );
+                    },
                     index: 0,
                   ),
 
@@ -159,11 +165,27 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       final isGoogleLinked = user != null &&
                           user.providerData.any((userInfo) => userInfo.providerId == 'google.com');
 
-                      return _buildGoogleSignInTile(
-                        context: context,
-                        isLinked: isGoogleLinked,
-                        user: user,
-                        index: 2,
+                      return StreamBuilder<DocumentSnapshot>(
+                        stream: user != null
+                            ? FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          final userData = snapshot.data?.data() as Map<String, dynamic>?;
+                          final displayEmail = userData?['email'] ?? user?.email;
+                          final displayName = userData?['displayName'] ?? user?.displayName;
+
+                          return _buildGoogleSignInTile(
+                            context: context,
+                            isLinked: isGoogleLinked,
+                            user: user,
+                            displayEmail: displayEmail,
+                            displayName: displayName,
+                            index: 2,
+                          );
+                        },
                       );
                     },
                   ),
@@ -233,8 +255,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     index: 6,
                   ),
 
-
-
                   const SizedBox(height: 8),
 
                   // Support Section
@@ -288,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       color: colorScheme.surface,
                       border: Border(
                         top: BorderSide(
-                          color: colorScheme.outline.withValues(alpha: 0.1),
+                          color: colorScheme.outline.withOpacity(0.1),
                           width: 1,
                         ),
                       ),
@@ -308,6 +328,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     required BuildContext context,
     required bool isLinked,
     required User? user,
+    required String? displayEmail,
+    required String? displayName,
     required int index,
   }) {
     final theme = Theme.of(context);
@@ -347,10 +369,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.1),
+                    color: colorScheme.outline.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -364,8 +386,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         gradient: LinearGradient(
                           colors: isLinked
                               ? [
-                            colorScheme.primary.withValues(alpha: 0.1),
-                            colorScheme.primary.withValues(alpha: 0.05),
+                            colorScheme.primary.withOpacity(0.1),
+                            colorScheme.primary.withOpacity(0.05),
                           ]
                               : [
                             Colors.white,
@@ -380,7 +402,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         color: colorScheme.primary,
                       )
                           : Image.asset(
-                        'assets/google.png', // Make sure to add Google icon to assets
+                        'assets/google.png',
                         width: 22,
                         height: 22,
                         errorBuilder: (context, error, stackTrace) {
@@ -398,18 +420,18 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Google Account',
+                            displayName ?? 'Google Account',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: colorScheme.onSurface,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          if (isLinked && user != null && user.email != null)
+                          if (isLinked && displayEmail != null)
                             Text(
-                              user.email!,
+                              displayEmail,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: colorScheme.onSurface.withOpacity(0.6),
                               ),
                             )
                           else
@@ -418,7 +440,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isLinked
                                     ? colorScheme.primary
-                                    : colorScheme.onSurface.withValues(alpha: 0.6),
+                                    : colorScheme.onSurface.withOpacity(0.6),
                                 fontWeight: isLinked ? FontWeight.w600 : FontWeight.normal,
                               ),
                             ),
@@ -430,8 +452,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: isLinked
-                            ? colorScheme.primary.withValues(alpha: 0.1)
-                            : Colors.grey.withValues(alpha: 0.1),
+                            ? colorScheme.primary.withOpacity(0.1)
+                            : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -449,7 +471,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                           Text(
                             isLinked ? 'Connected' : 'Not Linked',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: isLinked ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.5),
+                              color: isLinked ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.5),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -473,12 +495,9 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
       await userViewModel.signInWithGoogle();
 
       if (userViewModel.user != null) {
-        // ⭐ STEP 5: MIGRATE GUEST TASKS → FIRESTORE
+        // MIGRATE GUEST TASKS → FIRESTORE
         await userViewModel.migrateGuestTasksToFirestore();
 
-        // 🔄 Reload tasks after migration
-        if (mounted) {
-          // ignore: use_build_context_synchronously
           await context.read<TaskViewModel>().fetchTasks();
 
           if (!mounted) return;
@@ -489,7 +508,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           );
         }
       }
-
     } catch (e) {
       if (mounted) {
         // ignore: use_build_context_synchronously
@@ -501,11 +519,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     }
   }
 
-
   void _showConnectedSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Google account is already connected'),
+        content: const Text('Google account is already connected'),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -531,13 +548,13 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           Icon(
             icon,
             size: 20,
-            color: colorScheme.primary.withValues(alpha: 0.8),
+            color: colorScheme.primary.withOpacity(0.8),
           ),
           const SizedBox(width: 12),
           Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.9),
+              color: colorScheme.onSurface.withOpacity(0.9),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -587,10 +604,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.1),
+                    color: colorScheme.outline.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -602,8 +619,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           colors: [
-                            colorScheme.primary.withValues(alpha: 0.1),
-                            colorScheme.primary.withValues(alpha: 0.05),
+                            colorScheme.primary.withOpacity(0.1),
+                            colorScheme.primary.withOpacity(0.05),
                           ],
                         ),
                       ),
@@ -629,7 +646,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                           Text(
                             subtitle,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ),
                         ],
@@ -637,7 +654,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     ),
                     Icon(
                       Icons.chevron_right,
-                      color: colorScheme.onSurface.withValues(alpha: 0.3),
+                      color: colorScheme.onSurface.withOpacity(0.3),
                       size: 24,
                     ),
                   ],
@@ -686,10 +703,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: 0.1),
+                  color: colorScheme.outline.withOpacity(0.1),
                   width: 1,
                 ),
               ),
@@ -701,8 +718,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: [
-                          colorScheme.primary.withValues(alpha: 0.1),
-                          colorScheme.primary.withValues(alpha: 0.05),
+                          colorScheme.primary.withOpacity(0.1),
+                          colorScheme.primary.withOpacity(0.05),
                         ],
                       ),
                     ),
@@ -728,7 +745,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         Text(
                           subtitle,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                       ],
@@ -745,7 +762,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                           ? LinearGradient(
                         colors: [
                           colorScheme.primary,
-                          colorScheme.primary.withValues(alpha: 0.8),
+                          colorScheme.primary.withOpacity(0.8),
                         ],
                       )
                           : null,
@@ -753,12 +770,12 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       border: Border.all(
                         color: value
                             ? Colors.transparent
-                            : colorScheme.outline.withValues(alpha: 0.3),
+                            : colorScheme.outline.withOpacity(0.3),
                       ),
                       boxShadow: value
                           ? [
                         BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.3),
+                          color: colorScheme.primary.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -787,10 +804,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                                 shape: BoxShape.circle,
                                 color: value
                                     ? Colors.white
-                                    : colorScheme.onSurface.withValues(alpha: 0.3),
+                                    : colorScheme.onSurface.withOpacity(0.3),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: value ? 0.1 : 0.05),
+                                    color: Colors.black.withOpacity(value ? 0.1 : 0.05),
                                     blurRadius: 4,
                                     offset: const Offset(0, 1),
                                   ),
@@ -827,7 +844,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withValues(alpha: 0.3),
+            color: Colors.red.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -838,8 +855,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         child: InkWell(
           onTap: () => _showSignOutDialog(context),
           borderRadius: BorderRadius.circular(14),
-          highlightColor: Colors.red.withValues(alpha: 0.3),
-          splashColor: Colors.red.withValues(alpha: 0.5),
+          highlightColor: Colors.red.withOpacity(0.3),
+          splashColor: Colors.red.withOpacity(0.5),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
             child: Row(
@@ -862,6 +879,35 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showSignOutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await context.read<UserViewModel>().signSOut();
+              if (context.mounted) {
+                Navigator.pop(context);
+                _showSnackBar(context, 'Signed out successfully');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Sign Out'),
+          ),
+        ],
       ),
     );
   }
@@ -892,14 +938,14 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(24),
                       children: [
                         Row(
                           children: [
@@ -911,32 +957,42 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                             const SizedBox(width: 12),
                             Text(
                               'Help & Support',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        _buildHelpOption(
-                          context,
-                          icon: Icons.email,
-                          title: 'Email Support',
-                          subtitle: 'support@taskmaster.app',
-                        ),
                         const SizedBox(height: 16),
-                        _buildHelpOption(
+                        _buildHelpItem(
                           context,
-                          icon: Icons.live_help,
-                          title: 'FAQs',
-                          subtitle: 'Frequently asked questions',
+                          title: 'Getting Started',
+                          subtitle: 'Learn how to use the app',
+                          icon: Icons.play_circle_fill_outlined,
                         ),
-                        const SizedBox(height: 16),
-                        _buildHelpOption(
+                        _buildHelpItem(
                           context,
-                          icon: Icons.chat,
-                          title: 'Live Chat',
-                          subtitle: 'Available 9AM-5PM EST',
+                          title: 'Managing Tasks',
+                          subtitle: 'Create, edit, and organize your tasks',
+                          icon: Icons.task_outlined,
+                        ),
+                        _buildHelpItem(
+                          context,
+                          title: 'Reminders',
+                          subtitle: 'Set up notifications and reminders',
+                          icon: Icons.notifications_active_outlined,
+                        ),
+                        _buildHelpItem(
+                          context,
+                          title: 'Account Settings',
+                          subtitle: 'Manage your profile and preferences',
+                          icon: Icons.settings_outlined,
+                        ),
+                        _buildHelpItem(
+                          context,
+                          title: 'Contact Support',
+                          subtitle: 'Get help from our support team',
+                          icon: Icons.support_agent_outlined,
                         ),
                       ],
                     ),
@@ -950,158 +1006,16 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildHelpOption(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String subtitle,
-      }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return ScaleTransition(
-          scale: CurvedAnimation(
-            parent: ModalRoute.of(context)!.animation!,
-            curve: Curves.easeOutCubic,
-          ),
-          child: FadeTransition(
-            opacity: CurvedAnimation(
-              parent: ModalRoute.of(context)!.animation!,
-              curve: Curves.easeInOut,
-            ),
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.red.shade100,
-                          Colors.red.shade50,
-                        ],
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.logout_rounded,
-                      color: Colors.red.shade600,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Sign Out?',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              content: Text(
-                'Are you sure you want to sign out of your account?',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              actions: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.read<UserViewModel>().signOut();
-                          Navigator.pop(context);
-                          Navigator.of(context).pushReplacementNamed('/welcome');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade600,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          'Sign Out',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  Widget _buildHelpItem(BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: () {},
     );
   }
 
@@ -1120,9 +1034,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   }
 
   void _animateTap() {
-    _animationController.reset();
-    _animationController.forward();
+    // Add any tap animation if needed
   }
 }
-
-
