@@ -30,22 +30,40 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 /// Background message handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  debugPrint('Handling background message: ${message.messageId}');
+
+  // Show notification even in background
+  if (message.notification != null) {
+    await NotificationService().showInstantNotification(
+      title: message.notification!.title ?? 'New Notification',
+      body: message.notification!.body ?? '',
+      payload: message.data,
+    );
+  }
 }
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Initialize timezone database
+    // Initialize timezone database - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
+    debugPrint('🌍 Initializing timezone database...');
     tz.initializeTimeZones();
+    debugPrint('✅ Timezone database initialized');
 
-    // Set local timezone - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
-    debugPrint('✅ Timezone set to: $timeZoneName');
+    // Set local timezone
+    try {
+      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+      debugPrint('📍 Detected timezone: $timeZoneName');
+
+      final location = tz.getLocation(timeZoneName);
+      tz.setLocalLocation(location);
+      debugPrint('✅ Timezone set to: $timeZoneName');
+      debugPrint('   Current timezone offset: ${location.currentTimeZone}');
+    } catch (e) {
+      debugPrint('⚠️ Error setting timezone: $e. Falling back to UTC.');
+      tz.setLocalLocation(tz.UTC);
+    }
 
     // Initialize Firebase
     await Firebase.initializeApp(
@@ -104,10 +122,18 @@ class MyApp extends StatelessWidget {
               context,
               listen: false,
             );
+            final taskVm = Provider.of<TaskViewModel>(
+              context,
+              listen: false,
+            );
 
             NotificationService().onTokenGenerated = (token) {
               userVm.saveFcmToken(token);
             };
+
+            // 🔔 CRITICAL: Reschedule all task reminders after app initialization
+            debugPrint('🚀 App initialized. Rescheduling all task reminders...');
+            taskVm.rescheduleAllReminders();
           });
 
           return Consumer<ThemeViewModel>(

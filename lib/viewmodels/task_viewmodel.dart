@@ -30,7 +30,10 @@ class TaskViewModel extends ChangeNotifier {
 
   // Inside TaskViewModel class
   Future<void> _scheduleTaskReminder(Task task) async {
-    if (task.dueDate == null || task.isCompleted) return;
+    if (task.dueDate == null || task.isCompleted) {
+      debugPrint('⏰ Cannot schedule reminder: dueDate=${task.dueDate}, isCompleted=${task.isCompleted}');
+      return;
+    }
 
     final prefs = await SharedPreferences.getInstance();
     final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
@@ -46,6 +49,17 @@ class TaskViewModel extends ChangeNotifier {
         'type': 'taskReminder',
       };
 
+      debugPrint('═══════════════════════════════════════════════════');
+      debugPrint('⏰ [SCHEDULING TASK REMINDER]');
+      debugPrint('Task ID: ${task.id}');
+      debugPrint('Task Title: ${task.title}');
+      debugPrint('Due Date: ${task.dueDate}');
+      debugPrint('Advance Notice: $advanceMinutes minutes');
+      debugPrint('Scheduled Reminder Time: $scheduledTime');
+      debugPrint('Current Time: ${DateTime.now()}');
+      debugPrint('Time Until Reminder: ${scheduledTime.difference(DateTime.now()).inMinutes} minutes');
+      debugPrint('═══════════════════════════════════════════════════');
+
       await NotificationService().scheduleNotification(
         id: task.id.hashCode,
         title: 'Upcoming Task',
@@ -53,9 +67,9 @@ class TaskViewModel extends ChangeNotifier {
         scheduledTime: scheduledTime,
         payload: jsonEncode(payload),
       );
-      debugPrint('⏰ Notification scheduled for: $scheduledTime for task: ${task.title}');
+      debugPrint('✅ Notification scheduled successfully for task: ${task.title}');
     } else {
-      debugPrint('⏰ Scheduled time is in the past, skipping notification for: ${task.title}');
+      debugPrint('⚠️ Scheduled time ($scheduledTime) is in the past. Skipping notification for: ${task.title}');
     }
   }
   // --- MODIFIED METHODS ---
@@ -81,6 +95,11 @@ class TaskViewModel extends ChangeNotifier {
 
   Future<void> addTask(Task task) async {
     String finalId = task.id;
+    debugPrint('═══════════════════════════════════════════════════');
+    debugPrint('📝 [ADDING NEW TASK]');
+    debugPrint('Task: ${task.title}');
+    debugPrint('Due Date: ${task.dueDate}');
+    debugPrint('═══════════════════════════════════════════════════');
 
     if (isGuest) {
       await _localService.addTask(task);
@@ -91,9 +110,11 @@ class TaskViewModel extends ChangeNotifier {
           .collection('tasks')
           .add(task.toMap());
       finalId = docRef.id;
+      debugPrint('✅ Task saved to Firestore with ID: $finalId');
     }
 
     // Schedule the reminder for the newly added task
+    debugPrint('⏰ Now scheduling notification for task...');
     await _scheduleTaskReminder(task.copyWith(id: finalId));
 
     await fetchTasks();
@@ -168,6 +189,36 @@ class TaskViewModel extends ChangeNotifier {
     }
 
     await fetchTasks();
+  }
+
+  // --- NEW: Method to reschedule all task reminders (e.g., on app startup) ---
+  Future<void> rescheduleAllReminders() async {
+    debugPrint('═══════════════════════════════════════════════════');
+    debugPrint('🔄 [RESCHEDULING ALL TASK REMINDERS]');
+    debugPrint('Total tasks to check: ${tasks.length}');
+    debugPrint('═══════════════════════════════════════════════════');
+
+    int scheduledCount = 0;
+    int skippedCount = 0;
+
+    for (final task in tasks) {
+      if (!task.isCompleted && task.dueDate != null) {
+        // Cancel any existing notification for this task first
+        await NotificationService().cancelNotification(task.id.hashCode);
+
+        // Then reschedule it
+        await _scheduleTaskReminder(task);
+        scheduledCount++;
+      } else {
+        skippedCount++;
+      }
+    }
+
+    debugPrint('═══════════════════════════════════════════════════');
+    debugPrint('✅ Rescheduling complete!');
+    debugPrint('   Scheduled: $scheduledCount tasks');
+    debugPrint('   Skipped: $skippedCount tasks (completed or no due date)');
+    debugPrint('═══════════════════════════════════════════════════');
   }
 
   // ... (getTasksByDate remains same as your original)

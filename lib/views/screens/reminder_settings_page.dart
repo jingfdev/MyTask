@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/notification_service.dart';
@@ -154,6 +156,8 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                       onChanged: (value) async {
                         setState(() => _enableReminders = value);
                         await _saveSettings();
+                        if (!mounted) return;
+                        // ignore: use_build_context_synchronously
                         _showSnackBar(context, value ? 'Reminders enabled' : 'Reminders disabled');
                       },
                       index: 0,
@@ -384,6 +388,8 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
           onTap: () async {
             setState(() => _advanceNoticeMinutes = minutes);
             await _saveSettings();
+            if (!mounted) return;
+            // ignore: use_build_context_synchronously
             Navigator.pop(context);
           },
           borderRadius: BorderRadius.circular(12),
@@ -497,7 +503,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                       const SizedBox(height: 8),
                       Text('Get notified before task deadline', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.6))),
                       const SizedBox(height: 24),
-                      ..._advanceNoticeOptions.map((minutes) => _buildNoticeOptionTile(context, minutes)).toList(),
+                      ..._advanceNoticeOptions.map((minutes) => _buildNoticeOptionTile(context, minutes)),
                     ],
                   ),
                 ),
@@ -519,6 +525,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
+    if (!mounted) return;
     _showSnackBar(context, 'Test notification sent!');
   }
 
