@@ -73,7 +73,12 @@ void main() async {
     // ✅ AUTO GUEST LOGIN (ANONYMOUS)
     final auth = FirebaseAuth.instance;
     if (auth.currentUser == null) {
-      await auth.signInAnonymously();
+      try {
+        await auth.signInAnonymously();
+        debugPrint('✅ Signed in anonymously');
+      } catch (e) {
+        debugPrint('⚠️ Anonymous sign-in failed: $e');
+      }
     }
 
     // Initialize theme before running app

@@ -18,6 +18,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
   late TextEditingController _descriptionController;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  DateTime? _reminderDate;
+  TimeOfDay? _reminderTime;
   bool _isLoading = false;
 
   @override
@@ -44,6 +46,12 @@ class _TaskFormPageState extends State<TaskFormPage> {
         minute: suggestedTime.minute,
       );
     }
+
+    // Initialize reminder time
+    if (widget.task?.reminderTime != null) {
+      _reminderDate = widget.task!.reminderTime;
+      _reminderTime = TimeOfDay.fromDateTime(widget.task!.reminderTime!);
+    }
   }
 
   @override
@@ -69,6 +77,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   _buildMainInputs(colorScheme),
                   const SizedBox(height: 40),
                   _buildScheduleSection(colorScheme),
+                  const SizedBox(height: 20),
+                  _buildReminderSection(colorScheme),
                 ],
               ),
             ),
@@ -178,7 +188,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 color: colorScheme.onSurface.withValues(alpha: 0.4)),
             const SizedBox(width: 8),
             Text(
-              "SCHEDULE",
+              "DUE DATE",
               style: TextStyle(
                 color: colorScheme.onSurface.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w800,
@@ -208,6 +218,86 @@ class _TaskFormPageState extends State<TaskFormPage> {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildReminderSection(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.notifications_active_rounded, size: 18,
+                color: colorScheme.onSurface.withValues(alpha: 0.4)),
+            const SizedBox(width: 8),
+            Text(
+              "REMINDER (OPTIONAL)",
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 1,
+              ),
+            ),
+            const Spacer(),
+            if (_reminderDate != null)
+              IconButton(
+                icon: Icon(Icons.close, size: 18, color: colorScheme.error),
+                onPressed: () {
+                  setState(() {
+                    _reminderDate = null;
+                    _reminderTime = null;
+                  });
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (_reminderDate == null)
+          GestureDetector(
+            onTap: () => _pickReminderDate(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  "+ Add Reminder",
+                  style: TextStyle(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          Row(
+            children: [
+              _buildPickerTile(
+                colorScheme: colorScheme,
+                label: "Date",
+                value: DateFormat('EEE, MMM dd').format(_reminderDate!),
+                icon: Icons.event_available_rounded,
+                onTap: () => _pickReminderDate(context),
+              ),
+              const SizedBox(width: 16),
+              _buildPickerTile(
+                colorScheme: colorScheme,
+                label: "Time",
+                value: _reminderTime!.format(context),
+                icon: Icons.notifications_none_rounded,
+                onTap: () => _pickReminderTime(context),
+              ),
+            ],
+          ),
       ],
     );
   }
@@ -332,6 +422,42 @@ shadowColor: colorScheme.primary.withValues(alpha: 0.4),
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
+  Future<void> _pickReminderDate(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final initialDate = _reminderDate ?? _selectedDate ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) =>
+          Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: colorScheme.copyWith(
+                primary: colorScheme.primary,
+              ),
+            ),
+            child: child!,
+          ),
+    );
+    if (picked != null) {
+      setState(() {
+        _reminderDate = picked;
+        // If time wasn't set, default to current time or selected due time
+        _reminderTime ??= _selectedTime ?? TimeOfDay.now();
+      });
+    }
+  }
+
+  Future<void> _pickReminderTime(BuildContext context) async {
+    final initialTime = _reminderTime ?? _selectedTime ?? TimeOfDay.now();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+    if (picked != null) setState(() => _reminderTime = picked);
+  }
+
   void _confirmDelete() {
     HapticFeedback.heavyImpact();
     showDialog(
@@ -377,6 +503,17 @@ shadowColor: colorScheme.primary.withValues(alpha: 0.4),
         _selectedTime!.minute,
       );
 
+      DateTime? finalReminderTime;
+      if (_reminderDate != null && _reminderTime != null) {
+        finalReminderTime = DateTime(
+          _reminderDate!.year,
+          _reminderDate!.month,
+          _reminderDate!.day,
+          _reminderTime!.hour,
+          _reminderTime!.minute,
+        );
+      }
+
       final newTask = Task(
         id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
@@ -384,6 +521,7 @@ shadowColor: colorScheme.primary.withValues(alpha: 0.4),
         isCompleted: widget.task?.isCompleted ?? false,
         createdAt: widget.task?.createdAt ?? DateTime.now(),
         dueDate: finalDueDate,
+        reminderTime: finalReminderTime,
       );
 
       if (widget.task == null) {

@@ -30,18 +30,48 @@ class TaskViewModel extends ChangeNotifier {
 
   // Inside TaskViewModel class
   Future<void> _scheduleTaskReminder(Task task) async {
-    if (task.dueDate == null || task.isCompleted) {
-      debugPrint('⏰ Cannot schedule reminder: dueDate=${task.dueDate}, isCompleted=${task.isCompleted}');
+    if (task.isCompleted) {
+      debugPrint('⏰ Cannot schedule reminder: Task is completed');
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
+    // 1. Determine the time to schedule the notification
+    DateTime? scheduledTime;
+    String bodyText;
 
-    // Calculate reminder time: e.g., 5:00 PM - 15 mins = 4:45 PM
-    final scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
+    if (task.reminderTime != null) {
+      // User set a specific reminder time
+      scheduledTime = task.reminderTime;
+      bodyText = 'Reminder: ${task.title}';
+      debugPrint('⏰ Using specific reminder time: $scheduledTime');
+    } else if (task.dueDate != null) {
+      // Fallback to "advance notice" logic if no specific reminder time is set
+      final prefs = await SharedPreferences.getInstance();
+      final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
+      scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
+      bodyText = '${task.title} is due in $advanceMinutes minutes!';
+      debugPrint('⏰ Using default advance notice ($advanceMinutes mins): $scheduledTime');
+    } else {
+      debugPrint('⏰ No due date or reminder time set. Skipping notification.');
+      return;
+    }
 
-    // Only schedule if the reminder time is in the future
+    // 2. Validate the scheduled time
+    if (scheduledTime == null) return;
+
+    // If the calculated time is in the past, but we have a due date that is in the future,
+    // and we are using the "advance notice" logic (not explicit reminder time),
+    // try to schedule it for the exact due date instead.
+    if (scheduledTime.isBefore(DateTime.now()) &&
+        task.reminderTime == null && // Only do this fallback for implicit reminders
+        task.dueDate != null &&
+        task.dueDate!.isAfter(DateTime.now())) {
+      scheduledTime = task.dueDate!;
+      bodyText = '${task.title} is due now!';
+      debugPrint('⚠️ Advance reminder time passed. Scheduling for actual due date instead.');
+    }
+
+    // 3. Schedule the notification if the time is in the future
     if (scheduledTime.isAfter(DateTime.now())) {
       final payload = {
         'taskId': task.id,
@@ -54,8 +84,8 @@ class TaskViewModel extends ChangeNotifier {
       debugPrint('Task ID: ${task.id}');
       debugPrint('Task Title: ${task.title}');
       debugPrint('Due Date: ${task.dueDate}');
-      debugPrint('Advance Notice: $advanceMinutes minutes');
-      debugPrint('Scheduled Reminder Time: $scheduledTime');
+      debugPrint('Reminder Time: ${task.reminderTime}');
+      debugPrint('Final Scheduled Time: $scheduledTime');
       debugPrint('Current Time: ${DateTime.now()}');
       debugPrint('Time Until Reminder: ${scheduledTime.difference(DateTime.now()).inMinutes} minutes');
       debugPrint('═══════════════════════════════════════════════════');
@@ -63,7 +93,7 @@ class TaskViewModel extends ChangeNotifier {
       await NotificationService().scheduleNotification(
         id: task.id.hashCode,
         title: 'Upcoming Task',
-        body: '${task.title} is due in $advanceMinutes minutes!',
+        body: bodyText,
         scheduledTime: scheduledTime,
         payload: jsonEncode(payload),
       );
