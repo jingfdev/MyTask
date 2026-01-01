@@ -19,7 +19,7 @@ A Flutter app to help you manage your daily tasks. Create, organize, and track y
 ### Prerequisites
 - [Flutter](https://flutter.dev/docs/get-started/install) (3.9.2+)
 - [Dart](https://dart.dev/get-dart) (3.9.2+)
-- A free [Supabase](https://supabase.com) account
+- A free [Firebase](https://firebase.com) account
 
 ### Setup Steps
 
@@ -51,12 +51,11 @@ Pick a device when prompted and you're good to go!
 ## App Features
 
 - Create and manage tasks
-- Organize by category (Personal, Work, Shopping, etc.)
-- Set priority levels (Low, Medium, High)
 - Add due dates
 - Get notifications before deadlines
 - Search and tasks filter
-
+- User Account
+  
 ---
 
 ## 📝 License
