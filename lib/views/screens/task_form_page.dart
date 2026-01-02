@@ -19,6 +19,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
   late TextEditingController _descriptionController;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  DateTime? _reminderDate;
+  TimeOfDay? _reminderTime;
   bool _isLoading = false;
 
   @override
@@ -45,6 +47,12 @@ class _TaskFormPageState extends State<TaskFormPage> {
         minute: suggestedTime.minute,
       );
     }
+
+    // Initialize reminder time
+    if (widget.task?.reminderTime != null) {
+      _reminderDate = widget.task!.reminderTime;
+      _reminderTime = TimeOfDay.fromDateTime(widget.task!.reminderTime!);
+    }
   }
 
   @override
@@ -70,6 +78,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   _buildMainInputs(colorScheme),
                   const SizedBox(height: 40),
                   _buildScheduleSection(colorScheme),
+                  const SizedBox(height: 20),
+                  _buildReminderSection(colorScheme),
                 ],
               ),
             ),
@@ -101,43 +111,115 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Widget _buildHeaderSection(ColorScheme colorScheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            widget.task == null ? "NEW MISSION" : "EDIT TASK",
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w900,
-              fontSize: 11,
-              letterSpacing: 1.5,
-            ),
+          child: Icon(
+            widget.task == null ? Icons.add_task_rounded : Icons.edit_note_rounded,
+            color: colorScheme.primary,
+            size: 32,
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          widget.task == null
-              ? "What's on your\nmind?"
-              : "Refine your\nobjective",
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            height: 1.1,
-          ),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.task == null ? "New Task" : "Edit Task",
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              widget.task == null ? "What needs to be done?" : "Update your plan",
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildMainInputs(ColorScheme colorScheme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          TextField(
+            controller: _titleController,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              hintText: "Task Title",
+              hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4)),
+              border: InputBorder.none,
+              prefixIcon: Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.title_rounded, color: colorScheme.primary, size: 20),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+          ),
+          TextField(
+            controller: _descriptionController,
+            maxLines: 5,
+            minLines: 3,
+            style: TextStyle(
+              fontSize: 16,
+              color: colorScheme.onSurface.withValues(alpha: 0.8),
+              height: 1.5,
+            ),
+            decoration: InputDecoration(
+              hintText: "Add description, notes, or sub-tasks...",
+              hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4)),
+              border: InputBorder.none,
+              prefixIcon: Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(right: 12, bottom: 40), // Align to top
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.description_rounded, color: colorScheme.secondary, size: 20),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleSection(ColorScheme colorScheme) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: _titleController,
@@ -174,7 +256,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildScheduleSection(ColorScheme colorScheme) {
+  Widget _buildReminderSection(ColorScheme colorScheme) {
+    bool hasReminder = _reminderDate != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,28 +275,123 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 fontSize: 12,
                 letterSpacing: 1,
               ),
-            ),
-          ],
+              const Spacer(),
+              if (hasReminder)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _reminderDate = null;
+                      _reminderTime = null;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.close, size: 14, color: colorScheme.error),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Remove",
+                          style: TextStyle(
+                            color: colorScheme.error,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            _buildPickerTile(
-              colorScheme: colorScheme,
-              label: "Date",
-              value: DateFormat('EEE, MMM dd').format(_selectedDate!),
-              icon: Icons.today_rounded,
-              onTap: () => _pickDate(context),
+
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: hasReminder ? colorScheme.primaryContainer.withValues(alpha: 0.2) : colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: hasReminder ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
             ),
-            const SizedBox(width: 16),
-            _buildPickerTile(
-              colorScheme: colorScheme,
-              label: "Time",
-              value: _selectedTime!.format(context),
-              icon: Icons.access_time_filled_rounded,
-              onTap: () => _pickTime(context),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: hasReminder
+              ? Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildDateTimeTile(
+                    context,
+                    label: "Date",
+                    value: DateFormat('MMM dd').format(_reminderDate!),
+                    icon: Icons.notifications_active_rounded,
+                    onTap: () => _pickReminderDate(context),
+                    colorScheme: colorScheme,
+                    isActive: true,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: colorScheme.primary.withValues(alpha: 0.3),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                Expanded(
+                  child: _buildDateTimeTile(
+                    context,
+                    label: "Time",
+                    value: _reminderTime!.format(context),
+                    icon: Icons.access_time_filled_rounded,
+                    onTap: () => _pickReminderTime(context),
+                    colorScheme: colorScheme,
+                    isActive: true,
+                  ),
+                ),
+              ],
             ),
-          ],
+          )
+              : InkWell(
+            onTap: () => _pickReminderDate(context),
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.add_alert_rounded, color: colorScheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Set a specific reminder time",
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -243,28 +422,36 @@ class _TaskFormPageState extends State<TaskFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 20, color: colorScheme.primary),
-              const SizedBox(height: 12),
+              Icon(
+                  icon,
+                  size: 16,
+                  color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant
+              ),
+              const SizedBox(width: 6),
               Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: colorScheme.onSurface.withValues(alpha: 0.5),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  color: isActive ? colorScheme.primary.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 22),
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isActive ? colorScheme.primary : colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -340,6 +527,42 @@ class _TaskFormPageState extends State<TaskFormPage> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
+  Future<void> _pickReminderDate(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final initialDate = _reminderDate ?? _selectedDate ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) =>
+          Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: colorScheme.copyWith(
+                primary: colorScheme.primary,
+              ),
+            ),
+            child: child!,
+          ),
+    );
+    if (picked != null) {
+      setState(() {
+        _reminderDate = picked;
+        // If time wasn't set, default to current time or selected due time
+        _reminderTime ??= _selectedTime ?? TimeOfDay.now();
+      });
+    }
+  }
+
+  Future<void> _pickReminderTime(BuildContext context) async {
+    final initialTime = _reminderTime ?? _selectedTime ?? TimeOfDay.now();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+    if (picked != null) setState(() => _reminderTime = picked);
+  }
+
   void _confirmDelete() {
     HapticFeedback.heavyImpact();
     showDialog(
@@ -412,6 +635,17 @@ class _TaskFormPageState extends State<TaskFormPage> {
         _selectedTime!.minute,
       );
 
+      DateTime? finalReminderTime;
+      if (_reminderDate != null && _reminderTime != null) {
+        finalReminderTime = DateTime(
+          _reminderDate!.year,
+          _reminderDate!.month,
+          _reminderDate!.day,
+          _reminderTime!.hour,
+          _reminderTime!.minute,
+        );
+      }
+
       final newTask = Task(
         id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
@@ -419,6 +653,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
         isCompleted: widget.task?.isCompleted ?? false,
         createdAt: widget.task?.createdAt ?? DateTime.now(),
         dueDate: finalDueDate,
+        reminderTime: finalReminderTime,
       );
 
       final userVm = context.read<UserViewModel>();

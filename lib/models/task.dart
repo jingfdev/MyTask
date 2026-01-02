@@ -5,6 +5,7 @@ class Task {
   final bool isCompleted;
   final DateTime createdAt;
   final DateTime? dueDate;
+  final DateTime? reminderTime;
 
   Task({
     required this.id,
@@ -13,6 +14,7 @@ class Task {
     required this.isCompleted,
     required this.createdAt,
     this.dueDate,
+    this.reminderTime,
   });
 
   /// Helper method for updating tasks
@@ -23,6 +25,7 @@ class Task {
     bool? isCompleted,
     DateTime? createdAt,
     DateTime? dueDate,
+    DateTime? reminderTime,
   }) {
     return Task(
       id: id ?? this.id,
@@ -31,6 +34,7 @@ class Task {
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt ?? this.createdAt,
       dueDate: dueDate ?? this.dueDate,
+      reminderTime: reminderTime ?? this.reminderTime,
     );
   }
 
@@ -54,6 +58,14 @@ class Task {
       parsedDueDate = DateTime.tryParse(rawDueDate);
     }
 
+    // ---- reminderTime (safe & optional)
+    DateTime? parsedReminderTime;
+    final rawReminderTime = data['reminderTime'];
+
+    if (rawReminderTime is String && rawReminderTime.isNotEmpty) {
+      parsedReminderTime = DateTime.tryParse(rawReminderTime);
+    }
+
     return Task(
       id: id,
       title: data['title'] ?? '',
@@ -61,6 +73,7 @@ class Task {
       isCompleted: data['isCompleted'] ?? false,
       createdAt: createdAt,
       dueDate: parsedDueDate,
+      reminderTime: parsedReminderTime,
     );
   }
 
@@ -72,6 +85,7 @@ class Task {
       'isCompleted': isCompleted,
       'createdAt': createdAt.toIso8601String(),
       'dueDate': dueDate?.toIso8601String(),
+      'reminderTime': reminderTime?.toIso8601String(),
     };
   }
 }

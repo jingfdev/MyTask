@@ -41,8 +41,26 @@ class TaskViewModel extends ChangeNotifier {
   Future<void> _scheduleTaskReminder(Task task) async {
     if (task.dueDate == null || task.isCompleted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
+    // 1. Determine the time to schedule the notification
+    DateTime? scheduledTime;
+    String bodyText;
+
+    if (task.reminderTime != null) {
+      // User set a specific reminder time
+      scheduledTime = task.reminderTime;
+      bodyText = 'Reminder: ${task.title}';
+      debugPrint('⏰ Using specific reminder time: $scheduledTime');
+    } else if (task.dueDate != null) {
+      // Fallback to "advance notice" logic if no specific reminder time is set
+      final prefs = await SharedPreferences.getInstance();
+      final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
+      scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
+      bodyText = '${task.title} is due in $advanceMinutes minutes!';
+      debugPrint('⏰ Using default advance notice ($advanceMinutes mins): $scheduledTime');
+    } else {
+      debugPrint('⏰ No due date or reminder time set. Skipping notification.');
+      return;
+    }
 
     final scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
 
@@ -56,7 +74,7 @@ class TaskViewModel extends ChangeNotifier {
       await NotificationService().scheduleNotification(
         id: task.id.hashCode,
         title: 'Upcoming Task',
-        body: '${task.title} is due in $advanceMinutes minutes!',
+        body: bodyText,
         scheduledTime: scheduledTime,
         payload: jsonEncode(payload),
       );
