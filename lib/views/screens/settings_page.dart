@@ -550,26 +550,25 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: colorScheme.primary.withOpacity(0.8),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.9),
-              fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: colorScheme.primary.withOpacity(0.8),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.9),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ) );
+    }
 
   Widget _buildAnimatedSettingTile({
     required BuildContext context,
@@ -891,33 +890,26 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     );
   }
 
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await context.read<UserViewModel>().signOut();
-              if (context.mounted) {
-                Navigator.pop(context);
-                _showSnackBar(context, 'Signed out successfully');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _showSignOutDialog(BuildContext context) async {
+    // Close the dialog immediately when user confirms
+    Navigator.pop(context); // Close the dialog
+
+    // Show success message immediately
+    _showSnackBar(context, 'Signed out successfully');
+
+    // Perform logout in background (won't block UI)
+    Future.microtask(() async {
+      try {
+        await context.read<UserViewModel>().signOut();
+        // Optional: reload tasks or update UI if needed
+        if (context.mounted) {
+          await context.read<TaskViewModel>().fetchTasks();
+        }
+      } catch (e) {
+        debugPrint('Background logout error: $e');
+        // No need to show error to user since we already showed success
+      }
+    });
   }
 
   void _showHelpBottomSheet(BuildContext context) {

@@ -62,9 +62,9 @@ class TaskViewModel extends ChangeNotifier {
       return;
     }
 
-    final scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
+    // FIXED: Removed duplicate variable declaration here
 
-    if (scheduledTime.isAfter(DateTime.now())) {
+    if (scheduledTime!.isAfter(DateTime.now())) {
       final payload = {
         'taskId': task.id,
         'taskTitle': task.title,
