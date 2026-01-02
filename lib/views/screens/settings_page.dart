@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -209,8 +207,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         value: themeVm.isDarkMode,
                         onChanged: (value) async {
                           await themeVm.toggleDarkMode(value: value);
-                          if (!mounted) return;
-                          // ignore: use_build_context_synchronously
                           _showSnackBar(
                             context,
                             value ? 'Dark mode enabled' : 'Dark mode disabled',
@@ -498,10 +494,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         // MIGRATE GUEST TASKS → FIRESTORE
         await userViewModel.migrateGuestTasksToFirestore();
 
+        // Reload tasks after migration
+        if (context.mounted) {
           await context.read<TaskViewModel>().fetchTasks();
 
-          if (!mounted) return;
-          // ignore: use_build_context_synchronously
           _showSnackBar(
             context,
             'Google account linked successfully!',
@@ -509,15 +505,27 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         }
       }
     } catch (e) {
-      if (mounted) {
-        // ignore: use_build_context_synchronously
+      // ✅ Print real error to console
+      debugPrint('LOGIN ERROR: $e');
+
+      // ✅ If it's a Firebase auth error, print code + message
+      if (e is FirebaseAuthException) {
+        debugPrint('CODE: ${e.code}');
+        debugPrint('MESSAGE: ${e.message}');
+      }
+
+      // ✅ Show the real error to you (helps debug)
+      if (context.mounted) {
         _showSnackBar(
           context,
-          'Failed to link Google account. Please try again.',
+          e is FirebaseAuthException
+              ? '${e.code}: ${e.message}'
+              : 'Failed to link Google account. Please try again.',
         );
       }
     }
   }
+
 
   void _showConnectedSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -896,7 +904,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           ),
           ElevatedButton(
             onPressed: () async {
-              await context.read<UserViewModel>().signSOut();
+              await context.read<UserViewModel>().signOut();
               if (context.mounted) {
                 Navigator.pop(context);
                 _showSnackBar(context, 'Signed out successfully');

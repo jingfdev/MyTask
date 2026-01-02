@@ -1,8 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 import '../models/task.dart';
 import '../services/local_task_service.dart';
@@ -14,51 +15,43 @@ class TaskViewModel extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final LocalTaskService _localService = LocalTaskService();
 
-  late NotificationViewModel _notificationViewModel;
+  late final NotificationViewModel _notificationViewModel;
 
   List<Task> tasks = [];
 
   TaskViewModel() {
     _notificationViewModel = NotificationViewModel();
+
+    // ✅ Load tasks initially
     fetchTasks();
+
+    // ✅ IMPORTANT: automatically switch storage mode when auth changes
+    // This keeps your task list in sync when user signs in/out or links account.
+    _auth.authStateChanges().listen((_) async {
+      await fetchTasks();
+    });
   }
 
-  bool get isGuest => _auth.currentUser == null;
+  /// Guest means "anonymous user" OR "no user"
+  bool get isGuest => _auth.currentUser == null || _auth.currentUser!.isAnonymous;
+
   String? get userId => _auth.currentUser?.uid;
 
-  // --- NEW: PRIVATE HELPER FOR DYNAMIC REMINDERS ---
-
-  // Inside TaskViewModel class
+  // --- PRIVATE HELPER FOR DYNAMIC REMINDERS ---
   Future<void> _scheduleTaskReminder(Task task) async {
-    if (task.dueDate == null || task.isCompleted) {
-      debugPrint('⏰ Cannot schedule reminder: dueDate=${task.dueDate}, isCompleted=${task.isCompleted}');
-      return;
-    }
+    if (task.dueDate == null || task.isCompleted) return;
 
     final prefs = await SharedPreferences.getInstance();
     final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
 
-    // Calculate reminder time: e.g., 5:00 PM - 15 mins = 4:45 PM
     final scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
 
-    // Only schedule if the reminder time is in the future
     if (scheduledTime.isAfter(DateTime.now())) {
       final payload = {
         'taskId': task.id,
         'taskTitle': task.title,
         'type': 'taskReminder',
       };
-
-      debugPrint('═══════════════════════════════════════════════════');
-      debugPrint('⏰ [SCHEDULING TASK REMINDER]');
-      debugPrint('Task ID: ${task.id}');
-      debugPrint('Task Title: ${task.title}');
-      debugPrint('Due Date: ${task.dueDate}');
-      debugPrint('Advance Notice: $advanceMinutes minutes');
-      debugPrint('Scheduled Reminder Time: $scheduledTime');
-      debugPrint('Current Time: ${DateTime.now()}');
-      debugPrint('Time Until Reminder: ${scheduledTime.difference(DateTime.now()).inMinutes} minutes');
-      debugPrint('═══════════════════════════════════════════════════');
 
       await NotificationService().scheduleNotification(
         id: task.id.hashCode,
@@ -67,18 +60,57 @@ class TaskViewModel extends ChangeNotifier {
         scheduledTime: scheduledTime,
         payload: jsonEncode(payload),
       );
-      debugPrint('✅ Notification scheduled successfully for task: ${task.title}');
+
+      debugPrint('⏰ Notification scheduled for: $scheduledTime for task: ${task.title}');
     } else {
-      debugPrint('⚠️ Scheduled time ($scheduledTime) is in the past. Skipping notification for: ${task.title}');
+      debugPrint('⏰ Scheduled time is in the past, skipping notification for: ${task.title}');
     }
   }
-  // --- MODIFIED METHODS ---
+
+  // ---------------------------------------------------------------------------
+  // ✅ NEW: EXPLICIT LOCAL METHOD (guest-only)
+  // Use this from TaskFormPage when user chooses "Continue as guest"
+  // ---------------------------------------------------------------------------
+  Future<void> addTaskLocal(Task task) async {
+    // Save locally
+    await _localService.addTask(task);
+
+    // Schedule reminder based on local id
+    await _scheduleTaskReminder(task);
+
+    await fetchTasks();
+  }
+
+  // ---------------------------------------------------------------------------
+  // ✅ NEW: EXPLICIT FIRESTORE METHOD (logged-in only)
+  // Use this from TaskFormPage after sign-in.
+  // ---------------------------------------------------------------------------
+  Future<void> addTaskToFirestore(Task task) async {
+    if (userId == null) return;
+
+    // Add to Firestore, get docId
+    final docRef = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('tasks')
+        .add(task.toMap());
+
+    final finalId = docRef.id;
+
+    // Schedule reminder using Firestore id
+    await _scheduleTaskReminder(task.copyWith(id: finalId));
+
+    await fetchTasks();
+  }
+
+  // --- EXISTING METHODS (kept) ---
 
   Future<void> fetchTasks() async {
     if (isGuest) {
       tasks = await _localService.loadTasks();
     } else {
       if (userId == null) return;
+
       final snapshot = await _db
           .collection('users')
           .doc(userId)
@@ -93,28 +125,29 @@ class TaskViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// KEEP: addTask still works, but now it's a "smart" method.
+  /// - If guest: saves locally
+  /// - If logged-in: saves to Firestore
+  ///
+  /// You can continue using addTask anywhere in the app.
   Future<void> addTask(Task task) async {
     String finalId = task.id;
-    debugPrint('═══════════════════════════════════════════════════');
-    debugPrint('📝 [ADDING NEW TASK]');
-    debugPrint('Task: ${task.title}');
-    debugPrint('Due Date: ${task.dueDate}');
-    debugPrint('═══════════════════════════════════════════════════');
 
     if (isGuest) {
       await _localService.addTask(task);
     } else {
+      if (userId == null) return;
+
       final docRef = await _db
           .collection('users')
           .doc(userId)
           .collection('tasks')
           .add(task.toMap());
+
       finalId = docRef.id;
-      debugPrint('✅ Task saved to Firestore with ID: $finalId');
     }
 
-    // Schedule the reminder for the newly added task
-    debugPrint('⏰ Now scheduling notification for task...');
+    // Schedule reminder for the new task (ensure correct id)
     await _scheduleTaskReminder(task.copyWith(id: finalId));
 
     await fetchTasks();
@@ -125,6 +158,7 @@ class TaskViewModel extends ChangeNotifier {
       await _localService.updateTask(task);
     } else {
       if (userId == null) return;
+
       await _db
           .collection('users')
           .doc(userId)
@@ -149,6 +183,7 @@ class TaskViewModel extends ChangeNotifier {
       await _localService.deleteTask(id);
     } else {
       if (userId == null) return;
+
       await _db
           .collection('users')
           .doc(userId)
@@ -169,6 +204,7 @@ class TaskViewModel extends ChangeNotifier {
       await _localService.updateTask(updatedTask);
     } else {
       if (userId == null) return;
+
       await _db
           .collection('users')
           .doc(userId)
@@ -191,37 +227,6 @@ class TaskViewModel extends ChangeNotifier {
     await fetchTasks();
   }
 
-  // --- NEW: Method to reschedule all task reminders (e.g., on app startup) ---
-  Future<void> rescheduleAllReminders() async {
-    debugPrint('═══════════════════════════════════════════════════');
-    debugPrint('🔄 [RESCHEDULING ALL TASK REMINDERS]');
-    debugPrint('Total tasks to check: ${tasks.length}');
-    debugPrint('═══════════════════════════════════════════════════');
-
-    int scheduledCount = 0;
-    int skippedCount = 0;
-
-    for (final task in tasks) {
-      if (!task.isCompleted && task.dueDate != null) {
-        // Cancel any existing notification for this task first
-        await NotificationService().cancelNotification(task.id.hashCode);
-
-        // Then reschedule it
-        await _scheduleTaskReminder(task);
-        scheduledCount++;
-      } else {
-        skippedCount++;
-      }
-    }
-
-    debugPrint('═══════════════════════════════════════════════════');
-    debugPrint('✅ Rescheduling complete!');
-    debugPrint('   Scheduled: $scheduledCount tasks');
-    debugPrint('   Skipped: $skippedCount tasks (completed or no due date)');
-    debugPrint('═══════════════════════════════════════════════════');
-  }
-
-  // ... (getTasksByDate remains same as your original)
   Future<List<Task>> getTasksByDate(DateTime date) async {
     if (isGuest) {
       final all = await _localService.loadTasks();
@@ -233,9 +238,11 @@ class TaskViewModel extends ChangeNotifier {
       }).toList();
     } else {
       if (userId == null) return [];
+
       final start = DateTime(date.year, date.month, date.day);
       final end = start.add(const Duration(days: 1));
 
+      // NOTE: keeping your original query style
       final snapshot = await _db
           .collection('users')
           .doc(userId)

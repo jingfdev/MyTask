@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -30,51 +29,27 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 /// Background message handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Handling background message: ${message.messageId}');
-
-  // Show notification even in background
-  if (message.notification != null) {
-    await NotificationService().showInstantNotification(
-      title: message.notification!.title ?? 'New Notification',
-      body: message.notification!.body ?? '',
-      payload: message.data,
-    );
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 }
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Initialize timezone database - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
-    debugPrint('🌍 Initializing timezone database...');
+    // Initialize timezone database
     tz.initializeTimeZones();
-    debugPrint('✅ Timezone database initialized');
 
-    // Set local timezone
-    try {
-      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-      debugPrint('📍 Detected timezone: $timeZoneName');
-
-      final location = tz.getLocation(timeZoneName);
-      tz.setLocalLocation(location);
-      debugPrint('✅ Timezone set to: $timeZoneName');
-      debugPrint('   Current timezone offset: ${location.currentTimeZone}');
-    } catch (e) {
-      debugPrint('⚠️ Error setting timezone: $e. Falling back to UTC.');
-      tz.setLocalLocation(tz.UTC);
-    }
+    // Set local timezone - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    debugPrint('✅ Timezone set to: $timeZoneName');
 
     // Initialize Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-
-    // ✅ AUTO GUEST LOGIN (ANONYMOUS)
-    final auth = FirebaseAuth.instance;
-    if (auth.currentUser == null) {
-      await auth.signInAnonymously();
-    }
 
     // Initialize theme before running app
     final themeViewModel = ThemeViewModel();
@@ -99,6 +74,43 @@ void main() async {
   }
 }
 
+/// Runs one-time auth bootstrapping AFTER providers exist:
+/// - Ensure guest user (anonymous) exists
+/// - Handle web redirect result (Google sign-in redirect)
+class AppBootstrap extends StatefulWidget {
+  final Widget child;
+  const AppBootstrap({super.key, required this.child});
+
+  @override
+  State<AppBootstrap> createState() => _AppBootstrapState();
+}
+
+class _AppBootstrapState extends State<AppBootstrap> {
+  bool _ran = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Run after first frame so Provider is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _ran) return;
+      _ran = true;
+
+      final userVm = context.read<UserViewModel>();
+
+      // ✅ Always have a guest user if not logged in
+      await userVm.ensureGuestUser();
+
+      // ✅ Important for WEB redirect flow (popup blocked -> redirect)
+      await userVm.handleRedirectResult();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 class MyApp extends StatelessWidget {
   final ThemeViewModel? initialThemeViewModel;
 
@@ -117,23 +129,12 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
+          // Hook FCM token -> save to Firestore whenever it’s generated/refreshed.
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            final userVm = Provider.of<UserViewModel>(
-              context,
-              listen: false,
-            );
-            final taskVm = Provider.of<TaskViewModel>(
-              context,
-              listen: false,
-            );
-
+            final userVm = Provider.of<UserViewModel>(context, listen: false);
             NotificationService().onTokenGenerated = (token) {
               userVm.saveFcmToken(token);
             };
-
-            // 🔔 CRITICAL: Reschedule all task reminders after app initialization
-            debugPrint('🚀 App initialized. Rescheduling all task reminders...');
-            taskVm.rescheduleAllReminders();
           });
 
           return Consumer<ThemeViewModel>(
@@ -159,7 +160,10 @@ class MyApp extends StatelessWidget {
                   ),
                 ),
                 themeMode: themeVm.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-                home: WelcomeScreen(),
+
+                // ✅ Wrap your first screen with AppBootstrap
+                home: AppBootstrap(child: WelcomeScreen()),
+
                 routes: {
                   '/welcome': (_) => WelcomeScreen(),
                   '/onboarding': (_) => OnboardingScreen(),

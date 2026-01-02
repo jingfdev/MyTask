@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
+import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Task? task;
@@ -90,8 +91,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
       actions: [
         if (widget.task != null)
           IconButton(
-            icon: Icon(
-                Icons.delete_outline_rounded, color: colorScheme.error),
+            icon:
+            Icon(Icons.delete_outline_rounded, color: colorScheme.error),
             onPressed: () => _confirmDelete(),
           ),
         const SizedBox(width: 8),
@@ -147,7 +148,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
           ),
           decoration: InputDecoration(
             hintText: "Task Title",
-            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
+            hintStyle:
+            TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -157,10 +159,14 @@ class _TaskFormPageState extends State<TaskFormPage> {
         TextField(
           controller: _descriptionController,
           maxLines: 4,
-          style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
+          style: TextStyle(
+              fontSize: 16,
+              color: colorScheme.onSurface.withValues(alpha: 0.6),
+              height: 1.5),
           decoration: InputDecoration(
             hintText: "Add notes or sub-tasks...",
-            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
+            hintStyle:
+            TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
             border: InputBorder.none,
           ),
         ),
@@ -174,8 +180,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
       children: [
         Row(
           children: [
-            Icon(Icons.calendar_month_rounded, size: 18,
-                color: colorScheme.onSurface.withValues(alpha: 0.4)),
+            Icon(Icons.calendar_month_rounded,
+                size: 18, color: colorScheme.onSurface.withValues(alpha: 0.4)),
             const SizedBox(width: 8),
             Text(
               "SCHEDULE",
@@ -230,9 +236,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
-border: Border.all(
-  color: colorScheme.outline.withValues(alpha: 0.1),
-),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.1),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +269,7 @@ border: Border.all(
     );
   }
 
-Widget _buildBottomActionButton(ColorScheme colorScheme) {
+  Widget _buildBottomActionButton(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
       decoration: BoxDecoration(
@@ -271,7 +277,10 @@ Widget _buildBottomActionButton(ColorScheme colorScheme) {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [colorScheme.surface.withValues(alpha: 0), colorScheme.surface],
+          colors: [
+            colorScheme.surface.withValues(alpha: 0),
+            colorScheme.surface
+          ],
         ),
       ),
       child: SizedBox(
@@ -285,7 +294,7 @@ Widget _buildBottomActionButton(ColorScheme colorScheme) {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-shadowColor: colorScheme.primary.withValues(alpha: 0.4),
+            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
           ),
           child: _isLoading
               ? CircularProgressIndicator(color: colorScheme.onPrimary)
@@ -311,15 +320,14 @@ shadowColor: colorScheme.primary.withValues(alpha: 0.4),
       initialDate: _selectedDate!,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) =>
-          Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: colorScheme.copyWith(
-                primary: colorScheme.primary,
-              ),
-            ),
-            child: child!,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: colorScheme.copyWith(
+            primary: colorScheme.primary,
           ),
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
@@ -336,31 +344,58 @@ shadowColor: colorScheme.primary.withValues(alpha: 0.4),
     HapticFeedback.heavyImpact();
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25)),
-            title: const Text(
-                "Delete Task?", style: TextStyle(fontWeight: FontWeight.w800)),
-            content: const Text(
-                "Are you sure you want to remove this mission?"),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel")
-              ),
-              TextButton(
-                onPressed: () {
-                  context.read<TaskViewModel>().deleteTask(widget.task!.id);
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: const Text("Delete", style: TextStyle(
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        title: const Text("Delete Task?",
+            style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Text("Are you sure you want to remove this mission?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              context.read<TaskViewModel>().deleteTask(widget.task!.id);
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text("Delete",
+                style: TextStyle(
                     color: Colors.redAccent, fontWeight: FontWeight.bold)),
-              ),
-            ],
           ),
+        ],
+      ),
     );
+  }
+
+  Future<bool> _askRegisterOrGuest() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          "Save Tasks Permanently?",
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          "As a guest, tasks are stored locally only. Sign in to sync across devices and never lose your data.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Continue as Guest"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Sign In"),
+          ),
+        ],
+      ),
+    ) ??
+        false;
   }
 
   Future<void> _saveTask() async {
@@ -386,10 +421,41 @@ shadowColor: colorScheme.primary.withValues(alpha: 0.4),
         dueDate: finalDueDate,
       );
 
-      if (widget.task == null) {
-        await context.read<TaskViewModel>().addTask(newTask);
+      final userVm = context.read<UserViewModel>();
+      final taskVm = context.read<TaskViewModel>();
+
+      final isGuest = userVm.user == null || userVm.user!.isAnonymous;
+
+      // ✅ Only ask on CREATE (not edit)
+      if (widget.task == null && isGuest) {
+        final shouldSignIn = await _askRegisterOrGuest();
+
+        if (shouldSignIn) {
+          await userVm.signInWithGoogle();
+
+          // Optional: migrate existing guest tasks after login
+          await userVm.migrateGuestTasksToFirestore();
+        }
+      }
+
+      final stillGuest = userVm.user == null || userVm.user!.isAnonymous;
+
+      if (stillGuest) {
+        // ✅ Guest path: local
+        if (widget.task == null) {
+          await taskVm.addTaskLocal(newTask);
+        } else {
+          await taskVm.updateTask(
+              newTask); // local update already handled inside TaskVM
+        }
       } else {
-        await context.read<TaskViewModel>().updateTask(newTask);
+        // ✅ Signed-in path: Firestore
+        if (widget.task == null) {
+          await taskVm.addTaskToFirestore(newTask);
+        } else {
+          await taskVm.updateTask(
+              newTask); // Firestore update already handled inside TaskVM
+        }
       }
 
       if (mounted) Navigator.pop(context);

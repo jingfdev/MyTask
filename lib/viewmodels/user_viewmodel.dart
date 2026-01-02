@@ -98,46 +98,55 @@ class UserViewModel extends ChangeNotifier {
   /// Web-specific Google Sign-In
   Future<void> _signInWithGoogleWeb() async {
     try {
-      // For web, use Firebase's built-in signInWithPopup
       final googleProvider = GoogleAuthProvider();
 
-      // Add scopes
+      // Scopes
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
 
-      // Force account selection
+      // Force account chooser
       googleProvider.setCustomParameters({
-        'prompt': 'select_account'
+        'prompt': 'select_account',
       });
 
       final current = _auth.currentUser;
       UserCredential userCredential;
 
-      if (current != null && current.isAnonymous) {
-        // Link with existing anonymous account
-        userCredential = await current.linkWithPopup(googleProvider);
-      } else {
-        // Normal sign in
-        userCredential = await _auth.signInWithPopup(googleProvider);
+      try {
+        // 🔗 Try linking if guest
+        if (current != null && current.isAnonymous) {
+          userCredential = await current.linkWithPopup(googleProvider);
+        } else {
+          userCredential = await _auth.signInWithPopup(googleProvider);
+        }
+      } on FirebaseAuthException catch (e) {
+        // ✅ FIX: Google already linked to another user
+        if (e.code == 'credential-already-in-use') {
+          debugPrint(
+              '⚠️ Google already linked, signing in instead of linking');
+          userCredential = await _auth.signInWithPopup(googleProvider);
+        } else {
+          rethrow;
+        }
       }
 
-      // Reload user data
+      // Reload & sync user
       await userCredential.user!.reload();
-      user = FirebaseAuth.instance.currentUser;
+      user = _auth.currentUser;
 
-      // ✅ SAVE USER DATA TO FIRESTORE
+      // Save to Firestore
       if (user != null) {
         await _saveUserToFirestore(user!);
       }
 
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Web Google sign in error: $e');
+      debugPrint('❌ Web Google sign-in failed: $e');
 
-      // If popup fails, try redirect method
+      // Popup blocked fallback
       if (e.toString().contains('popup') ||
           e.toString().contains('blocked')) {
-        debugPrint('Popup blocked, trying redirect method...');
+        debugPrint('🔁 Popup blocked → using redirect');
         await _signInWithGoogleWebRedirect();
       } else {
         rethrow;
@@ -145,7 +154,6 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  /// Web alternative with redirect (for browsers that block popups)
   /// Web alternative with redirect (for browsers that block popups)
   Future<void> _signInWithGoogleWebRedirect() async {
     try {
@@ -157,18 +165,10 @@ class UserViewModel extends ChangeNotifier {
       if (current != null && current.isAnonymous) {
         // For linking anonymous account with Google
         await current.linkWithRedirect(googleProvider);
-        // The actual linking happens after redirect
-        // We need to check for the result when the page loads back
       } else {
         // Normal sign in with redirect
         await _auth.signInWithRedirect(googleProvider);
-        // Sign in happens after redirect
       }
-
-      // Note: After redirect, the page will reload
-      // We need to check for the redirect result in the main app initialization
-      // or in a separate method that gets called when the page loads
-
     } catch (e) {
       debugPrint('❌ Web redirect error: $e');
       rethrow;
@@ -234,30 +234,42 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  /// 🔁 SIGN OUT → BACK TO GUEST
-  Future<void> signSOut() async {
+  /// 🔁 SIGN OUT → BACK TO GUEST (FIXED METHOD NAME)
+  Future<void> signOut() async {
+    debugPrint('🔄 Starting sign out process...');
+
     // Sign out from Google if signed in
     if (!kIsWeb) {
       try {
         await GoogleSignIn().signOut();
+        debugPrint('✅ Signed out from Google');
       } catch (e) {
         debugPrint('❌ Error signing out from Google: $e');
       }
     }
 
-    // Sign out from Firebase
-    await _auth.signOut();
+    try {
+      // Sign out from Firebase
+      await _auth.signOut();
+      debugPrint('✅ Signed out from Firebase');
 
-    // Sign back in as anonymous user
-    final result = await _auth.signInAnonymously();
-    user = result.user;
+      // Sign back in as anonymous user
+      final result = await _auth.signInAnonymously();
+      user = result.user;
+      debugPrint('✅ Signed in as anonymous user: ${user?.uid}');
 
-    // ✅ Save guest user data to Firestore
-    if (user != null) {
-      await _saveUserToFirestore(user!);
+      // ✅ Save guest user data to Firestore
+      if (user != null) {
+        await _saveUserToFirestore(user!);
+        debugPrint('✅ Guest user data saved to Firestore');
+      }
+
+      notifyListeners();
+      debugPrint('✅ Sign out process completed successfully');
+    } catch (e) {
+      debugPrint('❌ Error during sign out process: $e');
+      rethrow;
     }
-
-    notifyListeners();
   }
 
   /// 🔥 SAVE/UPDATE USER DATA TO FIRESTORE
@@ -301,10 +313,7 @@ class UserViewModel extends ChangeNotifier {
   /// 📱 GET USER DATA FROM FIRESTORE
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(uid)
-          .get();
+      final userDoc = await _firestore.collection('users').doc(uid).get();
 
       if (userDoc.exists) {
         return userDoc.data();
