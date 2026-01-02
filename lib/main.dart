@@ -46,18 +46,28 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // debugPrint('Handling background message: ${message.messageId}');
 }
 
-
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Initialize timezone database
+    // Initialize timezone database - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
+    debugPrint('🌍 Initializing timezone database...');
     tz.initializeTimeZones();
+    debugPrint('✅ Timezone database initialized');
 
-    // Set local timezone - THIS IS CRITICAL FOR SCHEDULED NOTIFICATIONS
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
-    debugPrint('✅ Timezone set to: $timeZoneName');
+    // Set local timezone
+    try {
+      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+      debugPrint('📍 Detected timezone: $timeZoneName');
+
+      final location = tz.getLocation(timeZoneName);
+      tz.setLocalLocation(location);
+      debugPrint('✅ Timezone set to: $timeZoneName');
+      debugPrint('   Current timezone offset: ${location.currentTimeZone}');
+    } catch (e) {
+      debugPrint('⚠️ Error setting timezone: $e. Falling back to UTC.');
+      tz.setLocalLocation(tz.UTC);
+    }
 
     // Initialize Firebase
     await Firebase.initializeApp(
@@ -142,7 +152,7 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
-          // Hook FCM token -> save to Firestore whenever it’s generated/refreshed.
+          // Hook FCM token -> save to Firestore whenever it's generated/refreshed.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             final userVm = Provider.of<UserViewModel>(context, listen: false);
             NotificationService().onTokenGenerated = (token) {
