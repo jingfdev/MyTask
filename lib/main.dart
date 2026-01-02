@@ -58,7 +58,7 @@ void main() async {
     // Set navigator key before notifications
     NotificationService().setNavigatorKey(navigatorKey);
 
-    // Initialize notifications
+    // Initialize notifications (unchanged)
     await NotificationService().initialize();
 
     // Background message handler
