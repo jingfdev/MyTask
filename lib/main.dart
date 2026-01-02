@@ -32,7 +32,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Restore notification logic
+  if (message.notification != null) {
+    await NotificationService().showInstantNotification(
+      title: message.notification!.title ?? 'New Notification',
+      body: message.notification!.body ?? '',
+      payload: message.data,
+    );
+  }
+
+  // (optional) restore debugPrint if your team wants it
+  // debugPrint('Handling background message: ${message.messageId}');
 }
+
 
 void main() async {
   try {
