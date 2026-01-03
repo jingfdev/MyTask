@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
+import 'package:mytask_project/widgets/dialogs/auth_prompt_dialog.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Task? task;
@@ -368,36 +369,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Future<bool> _askRegisterOrGuest() async {
-    return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text(
-          "Save Tasks Permanently?",
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        content: const Text(
-          "As a guest, tasks are stored locally only. Sign in to sync across devices and never lose your data.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Continue as Guest"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Sign In"),
-          ),
-        ],
-      ),
-    ) ??
-        false;
-  }
-
   Future<void> _saveTask() async {
     if (_titleController.text.trim().isEmpty) return;
 
@@ -434,11 +405,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
         final isGuest = userVm.user == null || userVm.user!.isAnonymous;
 
         if (isGuest) {
-          final shouldSignIn = await _askRegisterOrGuest();
+          final shouldSignIn = await showAuthPromptDialog(context);
 
           if (shouldSignIn) {
             await userVm.signInWithGoogle();
-            // Optional: migrate existing guest tasks after login
             await userVm.migrateGuestTasksToFirestore();
 
             // After sign in, use Firestore method
@@ -468,3 +438,4 @@ class _TaskFormPageState extends State<TaskFormPage> {
     }
   }
 }
+

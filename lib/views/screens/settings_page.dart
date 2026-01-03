@@ -480,8 +480,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _handleGoogleSignIn(BuildContext context) async {
@@ -550,25 +549,26 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     final colorScheme = theme.colorScheme;
 
     return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: colorScheme.primary.withOpacity(0.8),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: colorScheme.primary.withOpacity(0.8),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.9),
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.9),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ) );
-    }
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildAnimatedSettingTile({
     required BuildContext context,
@@ -670,8 +670,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildAnimatedSwitchTile({
@@ -831,8 +830,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildSignOutButton(BuildContext context) {
@@ -1051,3 +1049,4 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     // Add any tap animation if needed
   }
 }
+

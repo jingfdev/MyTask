@@ -39,12 +39,23 @@ class TaskViewModel extends ChangeNotifier {
 
   // ✅ RESTORED: Method to reschedule all reminders on app startup
   Future<void> rescheduleAllReminders() async {
+    debugPrint('🔄 Rescheduling all task reminders...');
+    debugPrint('📋 Total tasks to process: ${tasks.length}');
+
+    int scheduledCount = 0;
+    int skippedCount = 0;
+
     for (final task in tasks) {
       if (!task.isCompleted && task.dueDate != null) {
         await NotificationService().cancelNotification(task.id.hashCode);
         await _scheduleTaskReminder(task);
+        scheduledCount++;
+      } else {
+        skippedCount++;
       }
     }
+
+    debugPrint('✅ Reschedule complete: $scheduledCount scheduled, $skippedCount skipped');
   }
 
   // --- PRIVATE HELPER FOR DYNAMIC REMINDERS ---
@@ -72,9 +83,8 @@ class TaskViewModel extends ChangeNotifier {
       return;
     }
 
-    // FIXED: Removed duplicate variable declaration here
-
     if (scheduledTime!.isAfter(DateTime.now())) {
+      debugPrint('⏰ Task "${task.title}": scheduling for $scheduledTime');
       final payload = {
         'taskId': task.id,
         'taskTitle': task.title,
@@ -89,9 +99,9 @@ class TaskViewModel extends ChangeNotifier {
         payload: jsonEncode(payload),
       );
 
-      debugPrint('⏰ Notification scheduled for: $scheduledTime for task: ${task.title}');
+      debugPrint('✅ Notification scheduled for task "${task.title}" at $scheduledTime');
     } else {
-      debugPrint('⏰ Scheduled time is in the past, skipping notification for: ${task.title}');
+      debugPrint('⚠️ Task "${task.title}": skipped (time in past)');
     }
   }
 

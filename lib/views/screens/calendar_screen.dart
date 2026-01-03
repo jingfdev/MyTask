@@ -8,6 +8,8 @@ import 'package:confetti/confetti.dart';
 
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
+import 'package:mytask_project/widgets/dialogs/auth_prompt_dialog.dart';
+import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -69,163 +71,63 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  // Add the dialog function here
-  Future<bool> _askRegisterOrGuest() async {
-    return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text(
-          "Save Tasks Permanently?",
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        content: const Text(
-          "As a guest, tasks are stored locally only. Sign in to sync across devices and never lose your data.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Continue as Guest"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Sign In"),
-          ),
-        ],
-      ),
-    ) ??
-        false;
-  }
-
-  int _calculateStreak(List<Task> allTasks) {
-    int streak = 0;
-    DateTime checkDate = DateTime.now();
-    while (true) {
-      final tasksForDay = allTasks.where((t) => isSameDay(t.dueDate, checkDate)).toList();
-      if (tasksForDay.isNotEmpty && tasksForDay.every((t) => t.isCompleted)) {
-        streak++;
-        checkDate = checkDate.subtract(const Duration(days: 1));
-      } else if (isSameDay(checkDate, DateTime.now())) {
-        checkDate = checkDate.subtract(const Duration(days: 1));
-      } else {
-        break;
-      }
-    }
-    return streak;
-  }
-
-  void _triggerCelebration(int updatedStreak) {
-    // Select a random celebration theme from your list of 20
-    final random = (List.from(_celebrations)..shuffle()).first;
-    final Color themeColor = random['color'];
-
-    _confettiController.play();
-    HapticFeedback.vibrate();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Force them to see their glory!
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 1. The Streak Badge (Only shows if they have a streak)
-            if (updatedStreak > 1)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: ShapeDecoration(
-                    gradient: LinearGradient(colors: [themeColor, themeColor.withValues(alpha: 0.6)]),
-                    shape: const StadiumBorder()
-                ),
-                child: Text(
-                  "🔥 $updatedStreak DAY STREAK",
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1),
-                ),
-              ),
-
-            // 2. The Big Icon with a subtle glow
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(
-                    color: themeColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Text(random['icon'], style: const TextStyle(fontSize: 55)),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // 3. Title & Message
-            Text(
-              random['title'],
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 26, color: themeColor),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              random['msg'],
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600], fontSize: 16, height: 1.4),
-            ),
-
-            const SizedBox(height: 30),
-
-            // 4. Action Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _confettiController.stop();
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: themeColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                    padding: const EdgeInsets.symmetric(vertical: 16)
-                ),
-                child: const Text(
-                  "Keep it up!",
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showQuickAddTask(BuildContext context) async {
-    // First, show the registration dialog
-    final bool wantsToRegister = await _askRegisterOrGuest();
+    final bool wantsToRegister = await showAuthPromptDialog(context);
 
-    // Handle the registration choice
     if (wantsToRegister) {
-      // User wants to sign in - you can navigate to sign in screen here
-      // For now, we'll just show a snackbar and continue with task creation
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Redirecting to sign in...'),
-          duration: Duration(seconds: 1),
+      HapticFeedback.lightImpact();
+      if (!context.mounted) return;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => const Center(
+          child: CircularProgressIndicator(),
         ),
       );
-      // TODO: Add navigation to sign in screen
-      return;
+
+      try {
+        final userViewModel = context.read<UserViewModel>();
+        await userViewModel.signInWithGoogle();
+        await userViewModel.migrateGuestTasksToFirestore();
+
+        if (!context.mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Signed in successfully!')),
+        );
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Sign-in Failed'),
+              content: Text(e.toString()),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _showQuickAddTask(context);
+                  },
+                  child: const Text('Retry'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Continue as Guest'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
     }
 
-    // User chose to continue as guest - proceed with task creation
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descController = TextEditingController();
     final viewModel = context.read<TaskViewModel>();
