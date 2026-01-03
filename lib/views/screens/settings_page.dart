@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mytask_project/viewmodels/user_viewmodel.dart';
 import 'package:mytask_project/viewmodels/theme_viewmodel.dart';
-import 'package:intl/intl.dart';
 import '../../viewmodels/task_viewmodel.dart';
 import 'reminder_settings_page.dart';
 import 'profile_page.dart'; // Add this import
@@ -480,7 +479,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Future<void> _handleGoogleSignIn(BuildContext context) async {
@@ -670,7 +670,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildAnimatedSwitchTile({
@@ -830,7 +831,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildSignOutButton(BuildContext context) {
@@ -901,7 +903,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton. styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Sign Out'),
           ),
         ],

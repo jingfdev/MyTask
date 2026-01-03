@@ -110,6 +110,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
+                    HapticFeedback.lightImpact();
                     Navigator.of(dialogContext).pop();
                     _showQuickAddTask(context);
                   },
@@ -117,6 +118,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
                 TextButton(
                   onPressed: () {
+                    HapticFeedback.lightImpact();
                     Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Continue as Guest'),
@@ -852,6 +854,42 @@ class _CalendarScreenState extends State<CalendarScreen> {
         }
       });
     }
+  }
+
+  /// Calculate the current task completion streak
+  int _calculateStreak(List<Task> allTasks) {
+    int streak = 0;
+    DateTime currentDate = DateTime.now();
+
+    for (int i = 0; i < 365; i++) {
+      final checkDate = currentDate.subtract(Duration(days: i));
+      final dayTasks = allTasks.where((t) => isSameDay(t.dueDate, checkDate)).toList();
+
+      if (dayTasks.isEmpty) {
+        break; // No tasks on this day, streak ends
+      }
+
+      final allCompleted = dayTasks.every((t) => t.isCompleted);
+      if (!allCompleted) {
+        break; // Not all tasks completed, streak ends
+      }
+
+      streak++;
+    }
+
+    return streak;
+  }
+
+  /// Trigger celebration animation when all tasks for the day are completed
+  void _triggerCelebration(int streak) {
+    HapticFeedback.heavyImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('🎉 Perfect day! Streak: $streak days'),
+        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 }
 

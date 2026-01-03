@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Shows a dialog asking user to sign in or continue as guest
 /// Returns true if user wants to sign in, false if they want to continue as guest
@@ -20,12 +21,14 @@ Future<bool> showAuthPromptDialog(BuildContext context) async {
           actions: [
             TextButton(
               onPressed: () {
+                HapticFeedback.lightImpact();
                 Navigator.pop(context, false);
               },
               child: const Text('Continue as Guest'),
             ),
             ElevatedButton(
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context, true);
               },
               child: const Text('Sign In'),
