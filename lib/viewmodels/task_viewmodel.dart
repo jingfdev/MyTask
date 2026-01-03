@@ -39,17 +39,32 @@ class TaskViewModel extends ChangeNotifier {
 
   // ✅ RESTORED: Method to reschedule all reminders on app startup
   Future<void> rescheduleAllReminders() async {
+    debugPrint('🔔 Rescheduling all reminders...');
+    
+    int scheduledCount = 0;
+    int skippedCount = 0;
+    
     for (final task in tasks) {
       if (!task.isCompleted && task.dueDate != null) {
         await NotificationService().cancelNotification(task.id.hashCode);
         await _scheduleTaskReminder(task);
+        scheduledCount++;
+      } else {
+        skippedCount++;
       }
     }
+    
+    debugPrint('✅ Reminder rescheduling complete: $scheduledCount scheduled, $skippedCount skipped');
   }
 
   // --- PRIVATE HELPER FOR DYNAMIC REMINDERS ---
   Future<void> _scheduleTaskReminder(Task task) async {
-    if (task.dueDate == null || task.isCompleted) return;
+    debugPrint('⏰ Scheduling reminder for task: "${task.title}" (ID: ${task.id})');
+    
+    if (task.dueDate == null || task.isCompleted) {
+      debugPrint('   ⏭️  Skipped: ${task.dueDate == null ? "No due date" : "Task completed"}');
+      return;
+    }
 
     // 1. Determine the time to schedule the notification
     DateTime? scheduledTime;
@@ -59,16 +74,16 @@ class TaskViewModel extends ChangeNotifier {
       // User set a specific reminder time
       scheduledTime = task.reminderTime;
       bodyText = 'Reminder: ${task.title}';
-      debugPrint('⏰ Using specific reminder time: $scheduledTime');
+      debugPrint('   📅 Using specific reminder time: ${scheduledTime.toString()}');
     } else if (task.dueDate != null) {
       // Fallback to "advance notice" logic if no specific reminder time is set
       final prefs = await SharedPreferences.getInstance();
       final int advanceMinutes = prefs.getInt('advance_notice_minutes') ?? 15;
       scheduledTime = task.dueDate!.subtract(Duration(minutes: advanceMinutes));
       bodyText = '${task.title} is due in $advanceMinutes minutes!';
-      debugPrint('⏰ Using default advance notice ($advanceMinutes mins): $scheduledTime');
+      debugPrint('   📅 Using advance notice ($advanceMinutes mins before due): ${scheduledTime.toString()}');
     } else {
-      debugPrint('⏰ No due date or reminder time set. Skipping notification.');
+      debugPrint('   ⏭️  Skipped: No due date or reminder time set');
       return;
     }
 
@@ -89,9 +104,9 @@ class TaskViewModel extends ChangeNotifier {
         payload: jsonEncode(payload),
       );
 
-      debugPrint('⏰ Notification scheduled for: $scheduledTime for task: ${task.title}');
+      debugPrint('   ✅ Notification scheduled for: ${scheduledTime.toString()}');
     } else {
-      debugPrint('⏰ Scheduled time is in the past, skipping notification for: ${task.title}');
+      debugPrint('   ⏭️  Skipped: Scheduled time (${scheduledTime.toString()}) is in the past');
     }
   }
 

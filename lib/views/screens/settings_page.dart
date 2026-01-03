@@ -567,7 +567,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               ),
             ),
           ],
-        ) );
+        ),
+      );
     }
 
   Widget _buildAnimatedSettingTile({

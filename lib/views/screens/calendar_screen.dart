@@ -8,6 +8,8 @@ import 'package:confetti/confetti.dart';
 
 import 'package:mytask_project/models/task.dart';
 import 'package:mytask_project/viewmodels/task_viewmodel.dart';
+import 'package:mytask_project/viewmodels/user_viewmodel.dart';
+import 'package:mytask_project/widgets/dialogs/auth_prompt_dialog.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -67,37 +69,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
-  }
-
-  // Add the dialog function here
-  Future<bool> _askRegisterOrGuest() async {
-    return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text(
-          "Save Tasks Permanently?",
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        content: const Text(
-          "As a guest, tasks are stored locally only. Sign in to sync across devices and never lose your data.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Continue as Guest"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Sign In"),
-          ),
-        ],
-      ),
-    ) ??
-        false;
   }
 
   int _calculateStreak(List<Task> allTasks) {
@@ -208,30 +179,128 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _showQuickAddTask(BuildContext context) async {
-    // First, show the registration dialog
-    final bool wantsToRegister = await _askRegisterOrGuest();
+    final userViewModel = context.read<UserViewModel>();
+    final taskViewModel = context.read<TaskViewModel>();
+    
+    // Check if user is a guest
+    final isGuest = userViewModel.user == null || userViewModel.user!.isAnonymous;
+    
+    bool shouldProceed = true;
+    
+    if (isGuest) {
+      // Show the registration dialog
+      final bool wantsToRegister = await showAuthPromptDialog(context);
 
-    // Handle the registration choice
-    if (wantsToRegister) {
-      // User wants to sign in - you can navigate to sign in screen here
-      // For now, we'll just show a snackbar and continue with task creation
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Redirecting to sign in...'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-      // TODO: Add navigation to sign in screen
-      return;
+      if (wantsToRegister) {
+        // User wants to sign in
+        // Show loading indicator
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Signing in...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        try {
+          // Attempt to sign in with Google
+          await userViewModel.signInWithGoogle();
+          
+          // Migrate guest tasks to Firestore
+          await userViewModel.migrateGuestTasksToFirestore();
+          
+          // Reload tasks from Firestore
+          await taskViewModel.fetchTasks();
+          
+          // Close loading dialog
+          if (!mounted) return;
+          Navigator.pop(context);
+          
+          // Show success message
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully signed in!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          
+          // Continue with task creation
+          shouldProceed = true;
+        } catch (e) {
+          // Close loading dialog
+          if (!mounted) return;
+          Navigator.pop(context);
+          
+          // Show error dialog
+          if (!mounted) return;
+          final retry = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                "Sign In Failed",
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              content: Text(
+                "Could not sign in: ${e.toString()}\n\nWould you like to continue as a guest?",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Retry Sign In"),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  child: const Text("Continue as Guest"),
+                ),
+              ],
+            ),
+          );
+          
+          if (retry == true) {
+            // Retry sign in
+            if (!mounted) return;
+            _showQuickAddTask(context);
+            return;
+          } else if (retry == false || retry == null) {
+            // Continue as guest if explicitly chosen or dialog dismissed
+            shouldProceed = (retry == null);
+          }
+        }
+      }
     }
+    
+    // If we should not proceed (user cancelled), return
+    if (!shouldProceed) return;
 
-    // User chose to continue as guest - proceed with task creation
+    // User chose to continue as guest or is already signed in - proceed with task creation
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descController = TextEditingController();
-    final viewModel = context.read<TaskViewModel>();
 
     HapticFeedback.heavyImpact();
 
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -305,7 +374,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     onPressed: () {
                       if (titleController.text.isNotEmpty) {
-                        viewModel.addTask(Task(
+                        taskViewModel.addTask(Task(
                           id: DateTime.now().millisecondsSinceEpoch.toString(),
                           title: titleController.text,
                           description: descController.text,

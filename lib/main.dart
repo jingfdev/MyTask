@@ -33,17 +33,17 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  debugPrint('📱 Background FCM message received: ${message.messageId}');
+
   // Restore notification logic
   if (message.notification != null) {
+    debugPrint('🔔 Showing notification: ${message.notification!.title}');
     await NotificationService().showInstantNotification(
       title: message.notification!.title ?? 'New Notification',
       body: message.notification!.body ?? '',
       payload: message.data,
     );
   }
-
-  // (optional) restore debugPrint if your team wants it
-  // debugPrint('Handling background message: ${message.messageId}');
 }
 
 void main() async {
