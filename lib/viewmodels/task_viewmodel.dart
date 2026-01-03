@@ -37,6 +37,16 @@ class TaskViewModel extends ChangeNotifier {
 
   String? get userId => _auth.currentUser?.uid;
 
+  // ✅ RESTORED: Method to reschedule all reminders on app startup
+  Future<void> rescheduleAllReminders() async {
+    for (final task in tasks) {
+      if (!task.isCompleted && task.dueDate != null) {
+        await NotificationService().cancelNotification(task.id.hashCode);
+        await _scheduleTaskReminder(task);
+      }
+    }
+  }
+
   // --- PRIVATE HELPER FOR DYNAMIC REMINDERS ---
   Future<void> _scheduleTaskReminder(Task task) async {
     if (task.dueDate == null || task.isCompleted) return;

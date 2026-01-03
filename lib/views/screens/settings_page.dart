@@ -891,25 +891,39 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   }
 
   Future<void> _showSignOutDialog(BuildContext context) async {
-    // Close the dialog immediately when user confirms
-    Navigator.pop(context); // Close the dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton. styleFrom(backgroundColor: Colors.red),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
 
-    // Show success message immediately
-    _showSnackBar(context, 'Signed out successfully');
-
-    // Perform logout in background (won't block UI)
-    Future.microtask(() async {
+    if (confirmed == true && context.mounted) {
       try {
         await context.read<UserViewModel>().signOut();
-        // Optional: reload tasks or update UI if needed
         if (context.mounted) {
           await context.read<TaskViewModel>().fetchTasks();
+          _showSnackBar(context, 'Signed out successfully');
         }
       } catch (e) {
-        debugPrint('Background logout error: $e');
-        // No need to show error to user since we already showed success
+        debugPrint('Sign out error: $e');
+        if (context.mounted) {
+          _showSnackBar(context, 'Error signing out.  Please try again.');
+        }
       }
-    });
+    }
   }
 
   void _showHelpBottomSheet(BuildContext context) {

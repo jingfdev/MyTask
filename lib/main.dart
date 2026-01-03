@@ -155,9 +155,14 @@ class MyApp extends StatelessWidget {
           // Hook FCM token -> save to Firestore whenever it's generated/refreshed.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             final userVm = Provider.of<UserViewModel>(context, listen: false);
+            final taskVm = Provider.of<TaskViewModel>(context, listen: false);
+
             NotificationService().onTokenGenerated = (token) {
               userVm.saveFcmToken(token);
             };
+
+            // ✅ Reschedule notifications on app startup
+            taskVm.rescheduleAllReminders();
           });
 
           return Consumer<ThemeViewModel>(
