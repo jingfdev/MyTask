@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -209,8 +207,6 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         value: themeVm.isDarkMode,
                         onChanged: (value) async {
                           await themeVm.toggleDarkMode(value: value);
-                          if (!mounted) return;
-                          // ignore: use_build_context_synchronously
                           _showSnackBar(
                             context,
                             value ? 'Dark mode enabled' : 'Dark mode disabled',
@@ -498,10 +494,10 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         // MIGRATE GUEST TASKS → FIRESTORE
         await userViewModel.migrateGuestTasksToFirestore();
 
+        // Reload tasks after migration
+        if (context.mounted) {
           await context.read<TaskViewModel>().fetchTasks();
 
-          if (!mounted) return;
-          // ignore: use_build_context_synchronously
           _showSnackBar(
             context,
             'Google account linked successfully!',
@@ -509,15 +505,27 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
         }
       }
     } catch (e) {
-      if (mounted) {
-        // ignore: use_build_context_synchronously
+      // ✅ Print real error to console
+      debugPrint('LOGIN ERROR: $e');
+
+      // ✅ If it's a Firebase auth error, print code + message
+      if (e is FirebaseAuthException) {
+        debugPrint('CODE: ${e.code}');
+        debugPrint('MESSAGE: ${e.message}');
+      }
+
+      // ✅ Show the real error to you (helps debug)
+      if (context.mounted) {
         _showSnackBar(
           context,
-          'Failed to link Google account. Please try again.',
+          e is FirebaseAuthException
+              ? '${e.code}: ${e.message}'
+              : 'Failed to link Google account. Please try again.',
         );
       }
     }
   }
+
 
   void _showConnectedSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -542,26 +550,25 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: colorScheme.primary.withOpacity(0.8),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.9),
-              fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: colorScheme.primary.withOpacity(0.8),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.9),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ) );
+    }
 
   Widget _buildAnimatedSettingTile({
     required BuildContext context,
@@ -883,33 +890,40 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     );
   }
 
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showSignOutDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Sign Out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () async {
-              await context.read<UserViewModel>().signSOut();
-              if (context.mounted) {
-                Navigator.pop(context);
-                _showSnackBar(context, 'Signed out successfully');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton. styleFrom(backgroundColor: Colors.red),
             child: const Text('Sign Out'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await context.read<UserViewModel>().signOut();
+        if (context.mounted) {
+          await context.read<TaskViewModel>().fetchTasks();
+          _showSnackBar(context, 'Signed out successfully');
+        }
+      } catch (e) {
+        debugPrint('Sign out error: $e');
+        if (context.mounted) {
+          _showSnackBar(context, 'Error signing out.  Please try again.');
+        }
+      }
+    }
   }
 
   void _showHelpBottomSheet(BuildContext context) {

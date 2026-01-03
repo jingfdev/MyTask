@@ -25,35 +25,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   late ConfettiController _confettiController;
 
- final List<Map<String, dynamic>> _celebrations = [
-  // --- High Energy / Productivity ---
-  {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent.withValues(alpha: 0.9)},
-  {"title": "Unstoppable!", "msg": "Perfect day completed!", "icon": "🚀", "color": Colors.blueAccent},
-  {"title": "Victory!", "msg": "All items checked. Great focus!", "icon": "⭐", "color": Colors.purpleAccent},
-  {"title": "Productivity King!", "msg": "You made that look easy.", "icon": "👑", "color": Colors.amber},
-  {"title": "Task Slayer!", "msg": "Everything on the list is gone.", "icon": "⚔️", "color": Colors.redAccent},
-  {"title": "God Mode!", "msg": "Is there anything you can't do?", "icon": "⚡", "color": Colors.cyanAccent},
+  final List<Map<String, dynamic>> _celebrations = [
+    // --- High Energy / Productivity ---
+    {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent.withValues(alpha: 0.9)},
+    {"title": "Unstoppable!", "msg": "Perfect day completed!", "icon": "🚀", "color": Colors.blueAccent},
+    {"title": "Victory!", "msg": "All items checked. Great focus!", "icon": "⭐", "color": Colors.purpleAccent},
+    {"title": "Productivity King!", "msg": "You made that look easy.", "icon": "👑", "color": Colors.amber},
+    {"title": "Task Slayer!", "msg": "Everything on the list is gone.", "icon": "⚔️", "color": Colors.redAccent},
+    {"title": "God Mode!", "msg": "Is there anything you can't do?", "icon": "⚡", "color": Colors.cyanAccent},
 
-  // --- Zen / Calm / Satisfying ---
-  {"title": "Clean Sweep!", "msg": "A perfectly empty list. So satisfying.", "icon": "🧹", "color": Colors.tealAccent},
-  {"title": "Pure Focus!", "msg": "You were in the zone today.", "icon": "🧘", "color": Colors.lightGreenAccent},
-  {"title": "Mind Like Water", "msg": "You handled everything with ease.", "icon": "🌊", "color": Colors.blue},
-  {"title": "Well Deserved Rest", "msg": "Day finished. Time to unplug.", "icon": "🌙", "color": Colors.indigoAccent},
+    // --- Zen / Calm / Satisfying ---
+    {"title": "Clean Sweep!", "msg": "A perfectly empty list. So satisfying.", "icon": "🧹", "color": Colors.tealAccent},
+    {"title": "Pure Focus!", "msg": "You were in the zone today.", "icon": "🧘", "color": Colors.lightGreenAccent},
+    {"title": "Mind Like Water", "msg": "You handled everything with ease.", "icon": "🌊", "color": Colors.blue},
+    {"title": "Well Deserved Rest", "msg": "Day finished. Time to unplug.", "icon": "🌙", "color": Colors.indigoAccent},
 
-  // --- Fun / Playful ---
-  {"title": "Boom Shakalaka!", "msg": "You're on fire today!", "icon": "🔥", "color": Colors.deepOrange},
-  {"title": "Level Up!", "msg": "Your productivity stats just peaked.", "icon": "🎮", "color": Colors.greenAccent},
-  {"title": "Checkmate!", "msg": "You played today perfectly.", "icon": "♟️", "color": Colors.blueGrey},
-  {"title": "Bullseye!", "msg": "Hit every single target on the list.", "icon": "🎯", "color": Colors.red},
-  {"title": "Magic Touch!", "msg": "How do you get so much done?", "icon": "🪄", "color": Colors.pinkAccent},
+    // --- Fun / Playful ---
+    {"title": "Boom Shakalaka!", "msg": "You're on fire today!", "icon": "🔥", "color": Colors.deepOrange},
+    {"title": "Level Up!", "msg": "Your productivity stats just peaked.", "icon": "🎮", "color": Colors.greenAccent},
+    {"title": "Checkmate!", "msg": "You played today perfectly.", "icon": "♟️", "color": Colors.blueGrey},
+    {"title": "Bullseye!", "msg": "Hit every single target on the list.", "icon": "🎯", "color": Colors.red},
+    {"title": "Magic Touch!", "msg": "How do you get so much done?", "icon": "🪄", "color": Colors.pinkAccent},
 
-  // --- Short & Punchy ---
-  {"title": "Flawless!", "msg": "100% completion achieved.", "icon": "💎", "color": Colors.lightBlueAccent},
-  {"title": "Beast Mode", "msg": "List: 0 | You: 1", "icon": "🦁", "color": Colors.brown},
-  {"title": "Done & Dusted", "msg": "See you tomorrow!", "icon": "✅", "color": Colors.green},
-  {"title": "Legendary!", "msg": "That's how you get things done.", "icon": "🏅", "color": Colors.orange},
-  {"title": "Mission Complete", "msg": "Returning to base for rest.", "icon": "🚁", "color": Colors.deepPurpleAccent.withValues(alpha: 0.9)},
-];
+    // --- Short & Punchy ---
+    {"title": "Flawless!", "msg": "100% completion achieved.", "icon": "💎", "color": Colors.lightBlueAccent},
+    {"title": "Beast Mode", "msg": "List: 0 | You: 1", "icon": "🦁", "color": Colors.brown},
+    {"title": "Done & Dusted", "msg": "See you tomorrow!", "icon": "✅", "color": Colors.green},
+    {"title": "Legendary!", "msg": "That's how you get things done.", "icon": "🏅", "color": Colors.orange},
+    {"title": "Mission Complete", "msg": "Returning to base for rest.", "icon": "🚁", "color": Colors.deepPurpleAccent.withValues(alpha: 0.9)},
+  ];
 
   @override
   void initState() {
@@ -67,6 +67,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  // Add the dialog function here
+  Future<bool> _askRegisterOrGuest() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          "Save Tasks Permanently?",
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          "As a guest, tasks are stored locally only. Sign in to sync across devices and never lose your data.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Continue as Guest"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Sign In"),
+          ),
+        ],
+      ),
+    ) ??
+        false;
   }
 
   int _calculateStreak(List<Task> allTasks) {
@@ -87,95 +118,114 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _triggerCelebration(int updatedStreak) {
-  // Select a random celebration theme from your list of 20
-  final random = (List.from(_celebrations)..shuffle()).first;
-  final Color themeColor = random['color'];
+    // Select a random celebration theme from your list of 20
+    final random = (List.from(_celebrations)..shuffle()).first;
+    final Color themeColor = random['color'];
 
-  _confettiController.play();
-  HapticFeedback.vibrate();
+    _confettiController.play();
+    HapticFeedback.vibrate();
 
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Force them to see their glory!
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1. The Streak Badge (Only shows if they have a streak)
-          if (updatedStreak > 1)
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: ShapeDecoration(
-                gradient: LinearGradient(colors: [themeColor, themeColor.withValues(alpha: 0.6)]),
-                shape: const StadiumBorder()
-              ),
-              child: Text(
-                "🔥 $updatedStreak DAY STREAK",
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1),
-              ),
-            ),
-
-          // 2. The Big Icon with a subtle glow
-          Stack(
-            alignment: Alignment.center,
-            children: [
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Force them to see their glory!
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 1. The Streak Badge (Only shows if they have a streak)
+            if (updatedStreak > 1)
               Container(
-                width: 80, height: 80,
-                decoration: BoxDecoration(
-                  color: themeColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: ShapeDecoration(
+                    gradient: LinearGradient(colors: [themeColor, themeColor.withValues(alpha: 0.6)]),
+                    shape: const StadiumBorder()
+                ),
+                child: Text(
+                  "🔥 $updatedStreak DAY STREAK",
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1),
                 ),
               ),
-              Text(random['icon'], style: const TextStyle(fontSize: 55)),
-            ],
-          ),
 
-          const SizedBox(height: 20),
-
-          // 3. Title & Message
-          Text(
-            random['title'],
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 26, color: themeColor),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            random['msg'],
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[600], fontSize: 16, height: 1.4),
-          ),
-
-          const SizedBox(height: 30),
-
-          // 4. Action Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                _confettiController.stop();
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: themeColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                padding: const EdgeInsets.symmetric(vertical: 16)
-              ),
-              child: const Text(
-                "Keep it up!",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-              ),
+            // 2. The Big Icon with a subtle glow
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    color: themeColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Text(random['icon'], style: const TextStyle(fontSize: 55)),
+              ],
             ),
-          )
-        ],
+
+            const SizedBox(height: 20),
+
+            // 3. Title & Message
+            Text(
+              random['title'],
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 26, color: themeColor),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              random['msg'],
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600], fontSize: 16, height: 1.4),
+            ),
+
+            const SizedBox(height: 30),
+
+            // 4. Action Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  _confettiController.stop();
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: themeColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    padding: const EdgeInsets.symmetric(vertical: 16)
+                ),
+                child: const Text(
+                  "Keep it up!",
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
-    ),
-  );
-}
-  void _showQuickAddTask(BuildContext context) {
+    );
+  }
+
+  void _showQuickAddTask(BuildContext context) async {
+    // First, show the registration dialog
+    final bool wantsToRegister = await _askRegisterOrGuest();
+
+    // Handle the registration choice
+    if (wantsToRegister) {
+      // User wants to sign in - you can navigate to sign in screen here
+      // For now, we'll just show a snackbar and continue with task creation
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Redirecting to sign in...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      // TODO: Add navigation to sign in screen
+      return;
+    }
+
+    // User chose to continue as guest - proceed with task creation
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descController = TextEditingController();
     final viewModel = context.read<TaskViewModel>();
@@ -213,7 +263,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                     child: Text(DateFormat('MMM dd').format(_selectedDate),
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
                 ],
               ),
@@ -417,7 +467,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Icon(Icons.bolt_rounded, size: 20, color: Colors.orange[700]),
                 const SizedBox(width: 6),
                 Text("PERFORMANCE",
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
               ],
             ),
             const Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 20),
@@ -455,9 +505,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Today's Score",
-                      style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
                     Text("${(progress * 100).toInt()}%",
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 42, fontWeight: FontWeight.w900)),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 42, fontWeight: FontWeight.w900)),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
@@ -484,20 +534,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     // YELLOW BOX (Row 1, Col 3)
                     Expanded(
                       child: _buildDashCard(
-                        "Streak",
-                        "$streak Days",
-                        Colors.orange,
-                        Icons.local_fire_department_rounded
+                          "Streak",
+                          "$streak Days",
+                          Colors.orange,
+                          Icons.local_fire_department_rounded
                       ),
                     ),
                     const SizedBox(height: 10), // Gap between yellow and green
                     // GREEN BOX (Row 2, Col 3)
                     Expanded(
                       child: _buildDashCard(
-                        "Goal",
-                        "$done/$total",
-                        Colors.green,
-                        Icons.track_changes_rounded
+                          "Goal",
+                          "$done/$total",
+                          Colors.green,
+                          Icons.track_changes_rounded
                       ),
                     ),
                   ],
@@ -684,8 +734,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() => _calendarFormat = _calendarFormat == CalendarFormat.week
-          ? CalendarFormat.month
-          : CalendarFormat.week);
+            ? CalendarFormat.month
+            : CalendarFormat.week);
       },
       child: Container(
         width: double.infinity,
@@ -695,9 +745,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(25), bottomRight: Radius.circular(25)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5)
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5)
             )
           ],
         ),
@@ -708,8 +758,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               width: 45,
               height: 5,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10)
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10)
               ),
             ),
           ],
@@ -763,13 +813,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           const SizedBox(width: 12),
           Text(
-            isToday ? "TODAY" : DateFormat('EEEE').format(date).toUpperCase(),
-            style: TextStyle(
-              color: isToday ? Colors.blueAccent : Colors.grey[700],
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5
-            )
+              isToday ? "TODAY" : DateFormat('EEEE').format(date).toUpperCase(),
+              style: TextStyle(
+                  color: isToday ? Colors.blueAccent : Colors.grey[700],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5
+              )
           ),
           const Spacer(),
           Text(
