@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -27,35 +29,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   late ConfettiController _confettiController;
 
-  final List<Map<String, dynamic>> _celebrations = [
-    // --- High Energy / Productivity ---
-    {"title": "Daily Champion!", "msg": "You've crushed every single task today.", "icon": "🏆", "color": Colors.orangeAccent.withValues(alpha: 0.9)},
-    {"title": "Unstoppable!", "msg": "Perfect day completed!", "icon": "🚀", "color": Colors.blueAccent},
-    {"title": "Victory!", "msg": "All items checked. Great focus!", "icon": "⭐", "color": Colors.purpleAccent},
-    {"title": "Productivity King!", "msg": "You made that look easy.", "icon": "👑", "color": Colors.amber},
-    {"title": "Task Slayer!", "msg": "Everything on the list is gone.", "icon": "⚔️", "color": Colors.redAccent},
-    {"title": "God Mode!", "msg": "Is there anything you can't do?", "icon": "⚡", "color": Colors.cyanAccent},
-
-    // --- Zen / Calm / Satisfying ---
-    {"title": "Clean Sweep!", "msg": "A perfectly empty list. So satisfying.", "icon": "🧹", "color": Colors.tealAccent},
-    {"title": "Pure Focus!", "msg": "You were in the zone today.", "icon": "🧘", "color": Colors.lightGreenAccent},
-    {"title": "Mind Like Water", "msg": "You handled everything with ease.", "icon": "🌊", "color": Colors.blue},
-    {"title": "Well Deserved Rest", "msg": "Day finished. Time to unplug.", "icon": "🌙", "color": Colors.indigoAccent},
-
-    // --- Fun / Playful ---
-    {"title": "Boom Shakalaka!", "msg": "You're on fire today!", "icon": "🔥", "color": Colors.deepOrange},
-    {"title": "Level Up!", "msg": "Your productivity stats just peaked.", "icon": "🎮", "color": Colors.greenAccent},
-    {"title": "Checkmate!", "msg": "You played today perfectly.", "icon": "♟️", "color": Colors.blueGrey},
-    {"title": "Bullseye!", "msg": "Hit every single target on the list.", "icon": "🎯", "color": Colors.red},
-    {"title": "Magic Touch!", "msg": "How do you get so much done?", "icon": "🪄", "color": Colors.pinkAccent},
-
-    // --- Short & Punchy ---
-    {"title": "Flawless!", "msg": "100% completion achieved.", "icon": "💎", "color": Colors.lightBlueAccent},
-    {"title": "Beast Mode", "msg": "List: 0 | You: 1", "icon": "🦁", "color": Colors.brown},
-    {"title": "Done & Dusted", "msg": "See you tomorrow!", "icon": "✅", "color": Colors.green},
-    {"title": "Legendary!", "msg": "That's how you get things done.", "icon": "🏅", "color": Colors.orange},
-    {"title": "Mission Complete", "msg": "Returning to base for rest.", "icon": "🚁", "color": Colors.deepPurpleAccent.withValues(alpha: 0.9)},
-  ];
 
   @override
   void initState() {
@@ -89,11 +62,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
       try {
         final userViewModel = context.read<UserViewModel>();
         await userViewModel.signInWithGoogle();
+
+        if (!context.mounted) return;
+
         await userViewModel.migrateGuestTasksToFirestore();
 
         if (!context.mounted) return;
         Navigator.of(context, rootNavigator: true).pop();
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Signed in successfully!')),
         );
@@ -128,6 +105,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           );
         }
       }
+      return;
     }
 
     final TextEditingController titleController = TextEditingController();

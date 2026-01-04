@@ -150,7 +150,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
           decoration: InputDecoration(
             hintText: "Task Title",
             hintStyle:
-            TextStyle(color: colorScheme.onSurface.withOpacity(0.3)),
+            TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -162,12 +162,12 @@ class _TaskFormPageState extends State<TaskFormPage> {
           maxLines: 4,
           style: TextStyle(
               fontSize: 16,
-              color: colorScheme.onSurface.withOpacity(0.6),
+              color: colorScheme.onSurface.withValues(alpha: 0.6),
               height: 1.5),
           decoration: InputDecoration(
             hintText: "Add notes or sub-tasks...",
             hintStyle:
-            TextStyle(color: colorScheme.onSurface.withOpacity(0.3)),
+            TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
             border: InputBorder.none,
           ),
         ),
@@ -182,12 +182,12 @@ class _TaskFormPageState extends State<TaskFormPage> {
         Row(
           children: [
             Icon(Icons.calendar_month_rounded,
-                size: 18, color: colorScheme.onSurface.withOpacity(0.4)),
+                size: 18, color: colorScheme.onSurface.withValues(alpha: 0.4)),
             const SizedBox(width: 8),
             Text(
               "SCHEDULE",
               style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.5),
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
                 letterSpacing: 1,
@@ -235,10 +235,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colorScheme.outline.withOpacity(0.1),
+              color: colorScheme.outline.withValues(alpha: 0.1),
             ),
           ),
           child: Column(
@@ -249,7 +249,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
               Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: colorScheme.onSurface.withOpacity(0.5),
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
@@ -279,7 +279,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colorScheme.surface.withOpacity(0),
+            colorScheme.surface.withValues(alpha: 0),
             colorScheme.surface
           ],
         ),
@@ -295,7 +295,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22)),
             elevation: 12,
-            shadowColor: colorScheme.primary.withOpacity(0.4),
+            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
           ),
           child: _isLoading
               ? CircularProgressIndicator(color: colorScheme.onPrimary)
@@ -427,15 +427,18 @@ class _TaskFormPageState extends State<TaskFormPage> {
     } catch (e) {
       debugPrint('❌ Error saving task: $e');
       // Show error to user if needed
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving task: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving task: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 }
+
 

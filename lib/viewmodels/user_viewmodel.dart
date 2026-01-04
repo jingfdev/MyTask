@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -84,13 +83,29 @@ class UserViewModel extends ChangeNotifier {
   /// 🔵 GOOGLE LOGIN (LINK IF GUEST) - WITH WEB SUPPORT
   Future<void> signInWithGoogle() async {
     try {
+      debugPrint('🔐 Starting Google Sign-In process...');
+
+      // CRITICAL: Ensure we have an anonymous user before attempting to link
+      debugPrint('👤 Checking current user state...');
+      if (_auth.currentUser == null || !_auth.currentUser!.isAnonymous) {
+        debugPrint('❌ Current user is null or not anonymous');
+        debugPrint('🔄 Attempting to ensure guest user exists...');
+        await ensureGuestUser();
+        debugPrint('✅ Guest user ensured');
+      } else {
+        debugPrint('✅ User is already anonymous - ready to link');
+      }
+
       if (kIsWeb) {
+        debugPrint('🌐 Using web-based Google Sign-In');
         return await _signInWithGoogleWeb();
       } else {
+        debugPrint('📱 Using mobile-based Google Sign-In');
         return await _signInWithGoogleMobile();
       }
     } catch (e) {
       debugPrint('❌ Error in Google sign in: $e');
+      debugPrint('📍 Error type: ${e.runtimeType}');
       rethrow;
     }
   }
@@ -197,39 +212,96 @@ class UserViewModel extends ChangeNotifier {
   /// Mobile-specific Google Sign-In
   Future<void> _signInWithGoogleMobile() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      debugPrint('🔐 Starting mobile Google Sign-In...');
+
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: [
+          'email',
+          'profile',
+        ],
+      );
+
+      debugPrint('📱 Triggering Google Sign-In dialog...');
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      if (googleUser == null) return;
+      if (googleUser == null) {
+        debugPrint('⚠️ User cancelled Google Sign-In');
+        return;
+      }
+
+      debugPrint('✅ User selected: ${googleUser.email}');
+      debugPrint('🔑 Getting authentication tokens...');
 
       final googleAuth = await googleUser.authentication;
 
+      debugPrint('📋 Token check - Access Token: ${googleAuth.accessToken != null ? "✅ Present" : "❌ Null"}');
+      debugPrint('📋 Token check - ID Token: ${googleAuth.idToken != null ? "✅ Present" : "❌ Null"}');
+
+      if (googleAuth.accessToken == null) {
+        throw Exception('Failed to get access token from Google');
+      }
+
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
+        accessToken: googleAuth.accessToken!,
         idToken: googleAuth.idToken,
       );
 
+      debugPrint('🔗 Linking/signing in with Firebase...');
       final current = _auth.currentUser;
       UserCredential userCredential;
 
       if (current != null && current.isAnonymous) {
-        userCredential = await current.linkWithCredential(credential);
+        debugPrint('🔄 Linking anonymous account with Google credentials...');
+        try {
+          userCredential = await current.linkWithCredential(credential);
+          debugPrint('✅ Account linked successfully');
+        } on FirebaseAuthException catch (e) {
+          debugPrint('⚠️ Linking failed with code: ${e.code}, message: ${e.message}');
+
+          if (e.code == 'credential-already-in-use') {
+            debugPrint('🔄 Credential already in use, signing in instead of linking...');
+            userCredential = await _auth.signInWithCredential(credential);
+            debugPrint('✅ Signed in with existing credential');
+          } else if (e.code == 'provider-already-linked') {
+            debugPrint('ℹ️ Provider already linked, refreshing user...');
+            await current.reload();
+            user = _auth.currentUser;
+            if (user != null) {
+              await _saveUserToFirestore(user!);
+            }
+            notifyListeners();
+            return;
+          } else {
+            debugPrint('❌ Linking error: ${e.message}');
+            rethrow;
+          }
+        }
       } else {
+        debugPrint('🆕 Signing in with Google credentials...');
         userCredential = await _auth.signInWithCredential(credential);
+        debugPrint('✅ Signed in successfully');
       }
 
       // Reload user data
+      debugPrint('♻️ Reloading user data...');
       await userCredential.user!.reload();
       user = FirebaseAuth.instance.currentUser;
 
+      debugPrint('👤 User ID: ${user?.uid}');
+      debugPrint('📧 User Email: ${user?.email}');
+
       // ✅ SAVE USER DATA TO FIRESTORE
       if (user != null) {
+        debugPrint('💾 Saving user data to Firestore...');
         await _saveUserToFirestore(user!);
+        debugPrint('✅ User data saved to Firestore');
       }
 
       notifyListeners();
+      debugPrint('✅ Google Sign-In completed successfully');
     } catch (e) {
       debugPrint('❌ Mobile Google sign in error: $e');
+      debugPrint('📍 Error type: ${e.runtimeType}');
       rethrow;
     }
   }

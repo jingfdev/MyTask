@@ -157,7 +157,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
                         setState(() => _enableReminders = value);
                         await _saveSettings();
                         if (!mounted) return;
-                        // ignore: use_build_context_synchronously
                         _showSnackBar(context, value ? 'Reminders enabled' : 'Reminders disabled');
                       },
                       index: 0,
@@ -389,7 +388,6 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> with Single
             setState(() => _advanceNoticeMinutes = minutes);
             await _saveSettings();
             if (!mounted) return;
-            // ignore: use_build_context_synchronously
             Navigator.pop(context);
           },
           borderRadius: BorderRadius.circular(12),

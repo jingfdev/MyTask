@@ -148,10 +148,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   margin: const EdgeInsets.only(left: 8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colorScheme.surface.withOpacity(0.8),
+                    color: colorScheme.surface.withValues(alpha: 0.8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -225,15 +225,15 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        colorScheme.primary.withOpacity(0.8),
-                        colorScheme.secondary.withOpacity(0.8),
+                        colorScheme.primary.withValues(alpha: 0.8),
+                        colorScheme.secondary.withValues(alpha: 0.8),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.3),
+                        color: colorScheme.primary.withValues(alpha: 0.3),
                         blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
@@ -275,7 +275,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 Text(
                   email,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -286,10 +286,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: colorScheme.outline.withOpacity(0.1),
+                color: colorScheme.outline.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -306,7 +306,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   indent: 72,
                 ),
 
@@ -321,7 +321,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   indent: 72,
                 ),
 
@@ -341,10 +341,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           Container(
             margin: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: colorScheme.outline.withOpacity(0.1),
+                color: colorScheme.outline.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -364,7 +364,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       Text(
                         'User ID',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.9),
+                          color: colorScheme.onSurface.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -377,13 +377,13 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.1),
+                        color: colorScheme.outline.withValues(alpha: 0.1),
                       ),
                     ),
                     child: SelectableText(
                       user?.uid ?? 'Unknown',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                         fontFamily: 'Monospace',
                       ),
                     ),
@@ -392,7 +392,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   Text(
                     'This is your unique identifier in the system',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.5),
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -405,10 +405,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -463,8 +463,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  colorScheme.primary.withOpacity(0.1),
-                  colorScheme.primary.withOpacity(0.05),
+                  colorScheme.primary.withValues(alpha: 0.1),
+                  colorScheme.primary.withValues(alpha: 0.05),
                 ],
               ),
             ),
@@ -482,7 +482,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 Text(
                   title,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 4),

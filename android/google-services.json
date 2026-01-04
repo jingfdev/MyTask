@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "240127573028",
+    "project_id": "ite-e3-todoapp",
+    "storage_bucket": "ite-e3-todoapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240127573028:android:a80500470d92134af66cb1",
+        "android_client_info": {
+          "package_name": "com.example.mytask_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVvpJ-lv8E1KliISWu6elrmM17cgSirvI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
