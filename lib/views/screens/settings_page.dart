@@ -518,12 +518,28 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
 
       // ✅ Show the real error to you (helps debug)
       if (context.mounted) {
-        _showSnackBar(
-          context,
-          e is FirebaseAuthException
-              ? '${e.code}: ${e.message}'
-              : 'Failed to link Google account. Please try again.',
-        );
+        String errorMessage;
+        final errorString = e.toString().toLowerCase();
+
+        if (e is FirebaseAuthException) {
+          errorMessage = '${e.code}: ${e.message}';
+        } else if (errorString.contains('configuration error') ||
+                   errorString.contains('sha-1') ||
+                   errorString.contains('apierror') ||
+                   errorString.contains('10:') ||
+                   errorString.contains('developer_error')) {
+          errorMessage = 'Google Sign-In is not configured properly. Please contact support.';
+        } else if (errorString.contains('network') ||
+                   errorString.contains('internet')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (errorString.contains('canceled') ||
+                   errorString.contains('cancelled')) {
+          errorMessage = 'Sign-in was cancelled.';
+        } else {
+          errorMessage = 'Failed to link Google account. Please try again.';
+        }
+
+        _showSnackBar(context, errorMessage);
       }
     }
   }

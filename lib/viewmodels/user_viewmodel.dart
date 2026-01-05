@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -215,14 +216,76 @@ class UserViewModel extends ChangeNotifier {
       debugPrint('🔐 Starting mobile Google Sign-In...');
 
       final GoogleSignIn googleSignIn = GoogleSignIn(
+        // Web Client ID from google-services.json (client_type: 3)
+        serverClientId: '240127573028-0tal3bqj46siv1lvp4j15n8383d0ut0r.apps.googleusercontent.com',
         scopes: [
           'email',
           'profile',
         ],
       );
 
+      // Ensure we start fresh - disconnect any existing session
+      try {
+        if (await googleSignIn.isSignedIn()) {
+          debugPrint('🔄 Already signed in to Google, disconnecting first...');
+          await googleSignIn.disconnect();
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error checking/disconnecting Google: $e');
+        // Continue anyway
+      }
+
       debugPrint('📱 Triggering Google Sign-In dialog...');
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await googleSignIn.signIn();
+      } on PlatformException catch (e) {
+        debugPrint('❌ PlatformException during Google Sign-In: ${e.code} - ${e.message}');
+        debugPrint('📍 Details: ${e.details}');
+
+        if (e.code == 'sign_in_failed' || e.code == '10') {
+          throw Exception(
+            'Google Sign-In failed. Please ensure:\n'
+            '1. Google Play Services is up to date\n'
+            '2. A Google account is signed in on this device\n'
+            '3. SHA-1 fingerprint is correctly configured'
+          );
+        } else if (e.code == 'network_error') {
+          throw Exception('Network error. Please check your internet connection.');
+        } else if (e.code == 'sign_in_canceled') {
+          debugPrint('⚠️ User cancelled Google Sign-In');
+          return;
+        }
+        throw Exception('Google Sign-In error: ${e.message ?? e.code}');
+      } catch (signInError) {
+        debugPrint('❌ Google Sign-In SDK error: $signInError');
+        debugPrint('📍 Error type: ${signInError.runtimeType}');
+
+        // Check for common configuration errors
+        final errorString = signInError.toString().toLowerCase();
+        if (errorString.contains('securityexception') ||
+            errorString.contains('unknown calling package')) {
+          throw Exception(
+            'Google Play Services error. Please:\n'
+            '1. Sign in to a Google account on this device\n'
+            '2. Update Google Play Services\n'
+            '3. Clear Google Play Services cache and try again'
+          );
+        }
+        if (errorString.contains('apierror') ||
+            errorString.contains('10:') ||
+            errorString.contains('developer_error') ||
+            errorString.contains('sign_in_failed')) {
+          throw Exception(
+            'Google Sign-In configuration error. Please ensure:\n'
+            '1. SHA-1 fingerprint is added to Firebase Console\n'
+            '2. google-services.json is up to date\n'
+            '3. OAuth consent screen is configured'
+          );
+        }
+        rethrow;
+      }
 
       if (googleUser == null) {
         debugPrint('⚠️ User cancelled Google Sign-In');
@@ -299,9 +362,24 @@ class UserViewModel extends ChangeNotifier {
 
       notifyListeners();
       debugPrint('✅ Google Sign-In completed successfully');
+    } on PlatformException catch (e) {
+      debugPrint('❌ PlatformException in mobile Google sign in: ${e.code} - ${e.message}');
+      throw Exception('Google Sign-In failed: ${e.message ?? e.code}');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('❌ FirebaseAuthException in mobile Google sign in: ${e.code} - ${e.message}');
+      rethrow;
     } catch (e) {
       debugPrint('❌ Mobile Google sign in error: $e');
       debugPrint('📍 Error type: ${e.runtimeType}');
+
+      // Convert unknown errors to user-friendly messages
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('securityexception') ||
+          errorString.contains('unknown calling package')) {
+        throw Exception(
+          'Google Play Services error. Please sign in to a Google account on this device first.'
+        );
+      }
       rethrow;
     }
   }

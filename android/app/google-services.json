@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "240127573028",
+    "firebase_url": "https://ite-e3-todoapp-default-rtdb.firebaseio.com",
     "project_id": "ite-e3-todoapp",
     "storage_bucket": "ite-e3-todoapp.firebasestorage.app"
   },
@@ -12,7 +13,28 @@
           "package_name": "com.example.mytask_project"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "240127573028-csegqmvuulrbah9mflvtek0qt4ucrreb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mytask_project",
+            "certificate_hash": "24e9e1f65f9d58d83a24d43aeae6d4f471ab026e"
+          }
+        },
+        {
+          "client_id": "240127573028-g7qccd0gkmif4b6ku9ulroimg7d8nn59.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mytask_project",
+            "certificate_hash": "0b3293e128c9650f86d3913810b12e2883014d27"
+          }
+        },
+        {
+          "client_id": "240127573028-0tal3bqj46siv1lvp4j15n8383d0ut0r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBVvpJ-lv8E1KliISWu6elrmM17cgSirvI"
@@ -20,7 +42,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "240127573028-0tal3bqj46siv1lvp4j15n8383d0ut0r.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "240127573028-niuvk85rr14m68mn3q5v09e01iuflgpc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mytaskProject"
+              }
+            }
+          ]
         }
       }
     }
