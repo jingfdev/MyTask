@@ -20,6 +20,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
   late TextEditingController _descriptionController;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  DateTime? _reminderTime;
+  bool _enableReminder = false;
   bool _isLoading = false;
 
   @override
@@ -45,6 +47,12 @@ class _TaskFormPageState extends State<TaskFormPage> {
         hour: suggestedTime.hour,
         minute: suggestedTime.minute,
       );
+    }
+
+    // Initialize reminder time from existing task if available
+    if (widget.task?.reminderTime != null) {
+      _reminderTime = widget.task!.reminderTime;
+      _enableReminder = true;
     }
   }
 
@@ -215,6 +223,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
             ),
           ],
         ),
+        const SizedBox(height: 24),
+        // ✅ REMINDER SECTION
+        _buildReminderSection(colorScheme),
       ],
     );
   }
@@ -312,6 +323,194 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
+  Widget _buildReminderSection(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.notifications_active_rounded,
+                size: 18, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+            const SizedBox(width: 8),
+            Text(
+              "REMINDER",
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Reminder toggle switch
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.alarm, size: 20, color: colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Set Reminder",
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Switch(
+                value: _enableReminder,
+                onChanged: (value) {
+                  setState(() {
+                    _enableReminder = value;
+                    if (!value) {
+                      _reminderTime = null;
+                    } else {
+                      // Default: 30 minutes before due date
+                      _reminderTime = _selectedDate!.subtract(
+                        const Duration(minutes: 30),
+                      );
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+        // Show reminder time picker only if reminder is enabled
+        if (_enableReminder) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _pickReminderDate(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.calendar_month_rounded,
+                            size: 20, color: colorScheme.primary),
+                        const SizedBox(height: 12),
+                        Text(
+                          "REMINDER DATE",
+                          style: TextStyle(
+                            color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('EEE, MMM dd')
+                              .format(_reminderTime ?? DateTime.now()),
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _pickReminderTime(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.access_time_filled_rounded,
+                            size: 20, color: colorScheme.primary),
+                        const SizedBox(height: 12),
+                        Text(
+                          "REMINDER TIME",
+                          style: TextStyle(
+                            color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          TimeOfDay.fromDateTime(_reminderTime ?? DateTime.now())
+                              .format(context),
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Info text about reminder timing
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded,
+                    size: 16, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "You'll be notified at this time",
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   // --- Logic Methods ---
 
   Future<void> _pickDate(BuildContext context) async {
@@ -339,6 +538,52 @@ class _TaskFormPageState extends State<TaskFormPage> {
       initialTime: _selectedTime!,
     );
     if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+  Future<void> _pickReminderDate(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _reminderTime ?? _selectedDate!,
+      firstDate: DateTime.now(),
+      lastDate: _selectedDate!,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: colorScheme.copyWith(
+            primary: colorScheme.primary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      final reminderTime = _reminderTime ?? DateTime.now();
+      setState(() => _reminderTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            reminderTime.hour,
+            reminderTime.minute,
+          ));
+    }
+  }
+
+  Future<void> _pickReminderTime(BuildContext context) async {
+    final reminderTime = _reminderTime ?? DateTime.now();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(reminderTime),
+    );
+    if (picked != null) {
+      final date = _reminderTime ?? DateTime.now();
+      setState(() => _reminderTime = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            picked.hour,
+            picked.minute,
+          ));
+    }
   }
 
   void _confirmDelete() {
@@ -383,6 +628,22 @@ class _TaskFormPageState extends State<TaskFormPage> {
         _selectedTime!.minute,
       );
 
+      // Validate reminder time if enabled
+      if (_enableReminder && _reminderTime != null) {
+        if (_reminderTime!.isAfter(finalDueDate)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Reminder time must be before due date'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
       final newTask = Task(
         id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
@@ -390,6 +651,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
         isCompleted: widget.task?.isCompleted ?? false,
         createdAt: widget.task?.createdAt ?? DateTime.now(),
         dueDate: finalDueDate,
+        reminderTime: _enableReminder ? _reminderTime : null,
       );
 
       final userVm = context.read<UserViewModel>();

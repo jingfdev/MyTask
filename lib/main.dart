@@ -57,10 +57,10 @@ void main() async {
     tz.initializeTimeZones();
     debugPrint('✅ Timezone database initialized');
 
-    // Set local timezone
+    // Set local timezone to Asia/Phnom_Penh
     try {
-      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-      debugPrint('📍 Detected timezone: $timeZoneName');
+      const String timeZoneName = 'Asia/Phnom_Penh';
+      debugPrint('📍 Setting timezone to: $timeZoneName');
 
       final location = tz.getLocation(timeZoneName);
       tz.setLocalLocation(location);
