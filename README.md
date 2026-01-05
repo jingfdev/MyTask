@@ -1,25 +1,26 @@
-# MyTask - To-Do-List App for MAD Class
+# MyTask📝 - To-Do-List App for MAD Class
 
 ---
 
 ## Project Overview
 
-A Flutter app to help you manage your daily tasks. Create, organize, and track your tasks with categories, priority levels, and due dates. Get notifications before your deadlines so you never miss anything important. This is a straightforward task management app built with Flutter and Supabase. It keeps your tasks synced across devices and sends you reminders when tasks are due.
+A simple yet functional to-do list app for creating, organizing, and tracking tasks. Supports categories, priority levels, due dates, notifications, search/filtering, and user accounts with cloud sync.
 
 **Tech Stack:**
-- Flutter & Dart
-- MVVM architecture with Provider state management
-- Supabase for the backend
-- Local notifications for reminders
+- **Framework**: Flutter (Dart)
+- **Architecture**: MVVM with Provider state management
+- **Backend**: Firebase (Authentication, Firestore, Cloud Messaging)
+- **Notifications**: Flutter Local Notifications + Firebase Cloud Messaging (FCM)
+- **Platforms**: Mobile, Desktop, Web
 
 ---
 
-## How to Setup
+## How to Set Up
 
 ### Prerequisites
-- [Flutter](https://flutter.dev/docs/get-started/install) (3.9.2+)
-- [Dart](https://dart.dev/get-dart) (3.9.2+)
-- A free [Firebase](https://firebase.com) account
+- [Flutter SDK (version 3.9.2 or higher)](https://flutter.dev/docs/get-started/install)
+- [Dart SDK](https://dart.dev/get-dart)
+- [A Firebase project](https://firebase.com)
 
 ### Setup Steps
 
@@ -34,30 +35,46 @@ cd MyTask
 flutter pub get
 ```
 
-**3. Configure Supabase:**
-- Create a new project on [supabase.com](https://supabase.com)
-- Copy your Supabase URL and API key
-- Update `lib/main.dart` with your credentials
+**3. Configure Firebase:**
 
 **4. Run the app:**
 ```bash
 flutter run
 ```
 
-Pick a device when prompted and you're good to go!
+---
+
+## Set up Firebase
+
+- [Go to Firebase Console and create a new project.](https://console.firebase.google.com).
+- Enable Authentication (Google Sign-In) and Firestore Database.
+- Add your app platforms (Android, iOS, Web, etc.).
+- Download: 
+  - google-services.json → place in android/app/
+  - GoogleService-Info.plist → place in ios/Runner/
+- For web/desktop, configure as per Firebase docs.
+
+**Run the app:**
+```bash
+flutter run
+```
 
 ---
 
 ## App Features
 
-- Create and manage tasks
-- Add due dates
-- Get notifications before deadlines
-- Search and tasks filter
-- User Account
+- **Task Management**: Create, edit, and delete tasks with title, description, due date, priority, and category.
+- **Calendar Dashboard**: Visualize your tasks on an interactive calendar view.
+- **Reminders & Notifications**: Local notifications with customizable reminder timing (timezone set to Asia/Phnom_Penh).
+- **Search & Filter**: Quickly find tasks by keyword, category, priority, or due date.
+- **Authentication**: Secure Google Sign-In powered by Firebase Authentication.
+- **Guest Mode**: Use core features without signing in (with gentle prompts to create an account for full cloud sync).
+- **Cloud Synchronization**: Tasks automatically synced across all your devices via Firebase Firestore.
+- **Profile & Settings**: Manage your account, preferences, and app settings.
+- **Cross-Platform Support**: Runs natively on Android, iOS, Windows, macOS, Linux, and Web.
   
 ---
 
 ## 📝 License
-
-All Right Reserved @2025 | ITE-Y4 | MAD-TEAM
+This is an educational project — solid for learning Flutter, MVVM, state management, cross-platform development, and integrating backend services like Firebase.
+All Rights Reserved © 2025
