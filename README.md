@@ -76,5 +76,5 @@ flutter run
 ---
 
 ## 📝 License
+All Rights Reserved © 2025 <br>
 This is an educational project — solid for learning Flutter, MVVM, state management, cross-platform development, and integrating backend services like Firebase.
-All Rights Reserved © 2025
