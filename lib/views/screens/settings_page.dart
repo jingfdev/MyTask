@@ -857,55 +857,123 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   Widget _buildSignOutButton(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          colors: [
-            Colors.red.shade400,
-            Colors.red.shade600,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showSignOutDialog(context),
-          borderRadius: BorderRadius.circular(14),
-          highlightColor: Colors.red.withValues(alpha: 0.3),
-          splashColor: Colors.red.withValues(alpha: 0.5),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.logout_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Sign Out',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return Consumer<UserViewModel>(
+      builder: (context, userVm, _) {
+        final isGuest = userVm.user?.isAnonymous ?? true;
+
+        if (isGuest) {
+          // Show "Create Account" button for guest users
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green.shade400,
+                  Colors.green.shade600,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _handleGoogleSignIn(context),
+                borderRadius: BorderRadius.circular(14),
+                highlightColor: Colors.green.withValues(alpha: 0.3),
+                splashColor: Colors.green.withValues(alpha: 0.5),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/google.png',
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.app_registration_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Create Account',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        } else {
+          // Show "Sign Out" button for authenticated users
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.red.shade400,
+                  Colors.red.shade600,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showSignOutDialog(context),
+                borderRadius: BorderRadius.circular(14),
+                highlightColor: Colors.red.withValues(alpha: 0.3),
+                splashColor: Colors.red.withValues(alpha: 0.5),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.logout_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Sign Out',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+      },
     );
   }
 
