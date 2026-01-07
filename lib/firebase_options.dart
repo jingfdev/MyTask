@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '240127573028',
     projectId: 'ite-e3-todoapp',
     authDomain: 'ite-e3-todoapp.firebaseapp.com',
+    databaseURL: 'https://ite-e3-todoapp-default-rtdb.firebaseio.com',
     storageBucket: 'ite-e3-todoapp.firebasestorage.app',
   );
 
@@ -54,6 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:240127573028:android:a80500470d92134af66cb1',
     messagingSenderId: '240127573028',
     projectId: 'ite-e3-todoapp',
+    databaseURL: 'https://ite-e3-todoapp-default-rtdb.firebaseio.com',
     storageBucket: 'ite-e3-todoapp.firebasestorage.app',
   );
 
@@ -62,7 +64,10 @@ class DefaultFirebaseOptions {
     appId: '1:240127573028:ios:b262ac0c96345b90f66cb1',
     messagingSenderId: '240127573028',
     projectId: 'ite-e3-todoapp',
+    databaseURL: 'https://ite-e3-todoapp-default-rtdb.firebaseio.com',
     storageBucket: 'ite-e3-todoapp.firebasestorage.app',
+    androidClientId: '240127573028-csegqmvuulrbah9mflvtek0qt4ucrreb.apps.googleusercontent.com',
+    iosClientId: '240127573028-niuvk85rr14m68mn3q5v09e01iuflgpc.apps.googleusercontent.com',
     iosBundleId: 'com.example.mytaskProject',
   );
 
@@ -71,7 +76,10 @@ class DefaultFirebaseOptions {
     appId: '1:240127573028:ios:b262ac0c96345b90f66cb1',
     messagingSenderId: '240127573028',
     projectId: 'ite-e3-todoapp',
+    databaseURL: 'https://ite-e3-todoapp-default-rtdb.firebaseio.com',
     storageBucket: 'ite-e3-todoapp.firebasestorage.app',
+    androidClientId: '240127573028-csegqmvuulrbah9mflvtek0qt4ucrreb.apps.googleusercontent.com',
+    iosClientId: '240127573028-niuvk85rr14m68mn3q5v09e01iuflgpc.apps.googleusercontent.com',
     iosBundleId: 'com.example.mytaskProject',
   );
 
@@ -81,6 +89,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '240127573028',
     projectId: 'ite-e3-todoapp',
     authDomain: 'ite-e3-todoapp.firebaseapp.com',
+    databaseURL: 'https://ite-e3-todoapp-default-rtdb.firebaseio.com',
     storageBucket: 'ite-e3-todoapp.firebasestorage.app',
   );
+
 }

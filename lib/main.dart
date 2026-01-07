@@ -27,24 +27,31 @@ import 'package:mytask_project/views/screens/notifications_screen.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 /// Background message handler
+/// This runs when the app is terminated or in the background
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  debugPrint('📱 FCM Background Message: ${message.messageId}');
+  debugPrint('🌌 ========== BACKGROUND/TERMINATED MESSAGE ==========');
+  debugPrint('🌌 Message ID: ${message.messageId}');
+  debugPrint('🌌 Title: ${message.notification?.title}');
+  debugPrint('🌌 Body: ${message.notification?.body}');
+  debugPrint('🌌 Data: ${message.data}');
+  debugPrint('🌌 =============================================');
 
-  // Restore notification logic
+  // Display notification using local notifications
   if (message.notification != null) {
-    debugPrint('🔔 Showing notification: ${message.notification!.title}');
+    debugPrint('📲 Showing background notification...');
     await NotificationService().showInstantNotification(
       title: message.notification!.title ?? 'New Notification',
       body: message.notification!.body ?? '',
       payload: message.data,
     );
+    debugPrint('✅ Background notification displayed');
   } else {
-    debugPrint('📭 No notification payload in message');
+    debugPrint('⚠️ No notification payload in background message');
   }
 }
 
@@ -83,13 +90,17 @@ void main() async {
     // Set navigator key before notifications
     NotificationService().setNavigatorKey(navigatorKey);
 
-    // Initialize notifications (unchanged)
+    // Initialize local notifications
+    debugPrint('📵 Initializing local notifications...');
     await NotificationService().initialize();
+    debugPrint('✅ Local notifications initialized');
 
-    // Background message handler
+    // Register background message handler for FCM
+    debugPrint('🌌 Registering FCM background message handler...');
     FirebaseMessaging.onBackgroundMessage(
       _firebaseMessagingBackgroundHandler,
     );
+    debugPrint('✅ FCM background message handler registered');
 
     runApp(MyApp(initialThemeViewModel: themeViewModel));
   } catch (e, stackTrace) {
@@ -159,11 +170,16 @@ class MyApp extends StatelessWidget {
             final userVm = Provider.of<UserViewModel>(context, listen: false);
             final taskVm = Provider.of<TaskViewModel>(context, listen: false);
 
+            debugPrint('🔗 Setting up FCM token callback...');
             NotificationService().onTokenGenerated = (token) {
+              debugPrint('💾 Saving FCM token to Firestore...');
+              debugPrint('   Token: $token');
               userVm.saveFcmToken(token);
+              debugPrint('✅ FCM token callback executed');
             };
 
             // ✅ Reschedule notifications on app startup
+            debugPrint('⏰ Rescheduling all reminders...');
             taskVm.rescheduleAllReminders();
           });
 

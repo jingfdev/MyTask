@@ -110,28 +110,50 @@ class NotificationService {
   }
 
   Future<void> _requestPermissions() async {
-    await firebaseMessaging.requestPermission(
+    debugPrint('🔐 Requesting FCM permissions...');
+
+    final NotificationSettings settings = await firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
+      provisional: false,
+      carPlay: false,
+      criticalAlert: false,
+      announcement: false,
     );
 
+    debugPrint('📱 FCM Permission Status: ${settings.authorizationStatus}');
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      debugPrint('✅ FCM permissions granted (Full Authorization)');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      debugPrint('⚠️ FCM permissions granted (Provisional)');
+    } else {
+      debugPrint('❌ FCM permissions denied');
+    }
+
     if (Platform.isAndroid) {
+      debugPrint('📱 Requesting Android-specific permissions...');
       final androidPlugin = flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
 
       // Request notification permission
-      await androidPlugin?.requestNotificationsPermission();
+      final bool? notificationPermission = await androidPlugin?.requestNotificationsPermission();
+      debugPrint('   Notification permission: ${notificationPermission ?? 'unknown'}');
 
       // Request exact alarm permission
       final bool? isAllowed =
           await androidPlugin?.canScheduleExactNotifications();
+      debugPrint('   Can schedule exact notifications: $isAllowed');
+
       if (isAllowed == false) {
         debugPrint('⚠️ Requesting exact alarm permissions...');
-        await androidPlugin?.requestExactAlarmsPermission();
+        final bool? exactAlarmsGranted = await androidPlugin?.requestExactAlarmsPermission();
+        debugPrint('   Exact alarms permission granted: $exactAlarmsGranted');
       }
     }
+
+    debugPrint('✅ Permission request completed');
   }
 
   Future<void> _createNotificationChannel() async {
@@ -158,39 +180,92 @@ class NotificationService {
   }
 
   Future<void> _initializeFirebaseMessaging() async {
-    String? token = await firebaseMessaging.getToken();
-    if (token != null && onTokenGenerated != null) {
-      onTokenGenerated!(token);
-      debugPrint('📱 FCM Token: $token');
-    }
+    debugPrint('🚀 Initializing Firebase Cloud Messaging (FCM)...');
 
-    firebaseMessaging.onTokenRefresh.listen((newToken) {
-      if (onTokenGenerated != null) {
-        onTokenGenerated!(newToken);
-        debugPrint('🔄 New FCM Token: $newToken');
+    try {
+      // Get initial FCM token
+      String? token = await firebaseMessaging.getToken();
+      if (token != null) {
+        debugPrint('📱 ========== FCM TOKEN ==========');
+        debugPrint('📱 $token');
+        debugPrint('📱 ================================');
+        if (onTokenGenerated != null) {
+          onTokenGenerated!(token);
+        }
+      } else {
+        debugPrint('⚠️ Failed to retrieve FCM token on initialization');
       }
-    });
 
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+      // Listen for token refresh
+      debugPrint('🔄 Setting up FCM token refresh listener...');
+      firebaseMessaging.onTokenRefresh.listen((newToken) {
+        debugPrint('🔄 ========== NEW FCM TOKEN ==========');
+        debugPrint('🔄 $newToken');
+        debugPrint('🔄 ====================================');
+        if (onTokenGenerated != null) {
+          onTokenGenerated!(newToken);
+        }
+      });
+
+      // Listen for foreground messages
+      debugPrint('👀 Setting up foreground message listener...');
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('📨 ========== FOREGROUND MESSAGE ==========');
+        debugPrint('📨 Message ID: ${message.messageId}');
+        debugPrint('📨 Title: ${message.notification?.title}');
+        debugPrint('📨 Body: ${message.notification?.body}');
+        debugPrint('📨 Data: ${message.data}');
+        debugPrint('📨 ========================================');
+        _handleForegroundMessage(message);
+      });
+
+      // Listen for background/terminated message interactions
+      debugPrint('🖥️ Setting up message opened app listener...');
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('🔔 ========== MESSAGE OPENED APP ==========');
+        debugPrint('🔔 Message ID: ${message.messageId}');
+        debugPrint('🔔 Title: ${message.notification?.title}');
+        debugPrint('🔔 Body: ${message.notification?.body}');
+        debugPrint('🔔 Data: ${message.data}');
+        debugPrint('🔔 =========================================');
+        _handleMessageOpenedApp(message);
+      });
+
+      debugPrint('✅ Firebase Cloud Messaging initialized successfully');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing Firebase Cloud Messaging: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
-    debugPrint('📨 Foreground message received: ${message.notification?.title}');
+    debugPrint('📨 Handling foreground message...');
     if (message.notification != null) {
+      debugPrint('   📲 Notification title: ${message.notification!.title}');
+      debugPrint('   📝 Notification body: ${message.notification!.body}');
       showInstantNotification(
         title: message.notification!.title ?? 'New Notification',
         body: message.notification!.body ?? '',
         payload: message.data,
       );
+    } else {
+      debugPrint('   ⚠️ No notification payload in foreground message');
     }
+    _messageReceivedStream.add(message);
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {
+    debugPrint('🔔 Notification tapped from background/terminated state');
+    debugPrint('   Message ID: ${message.messageId}');
+    debugPrint('   Data: ${message.data}');
     _notificationTapStream.add({
       'type': 'fcm',
       'data': message.data,
     });
+    // Also handle navigation if needed
+    _handleNotificationNavigation(
+      message.data.isNotEmpty ? jsonEncode(message.data) : null,
+    );
   }
 
   void _onNotificationTap(NotificationResponse response) {
@@ -315,7 +390,17 @@ class NotificationService {
       final bool sound = prefs.getBool('reminder_sound') ?? true;
       final bool vib = prefs.getBool('reminder_vibration') ?? true;
 
-      debugPrint('🔔 Showing instant notification - Title: $title, Body: $body');
+      debugPrint('🔔 Showing instant notification...');
+      debugPrint('   📲 Title: $title');
+      debugPrint('   📝 Body: $body');
+      debugPrint('   🎯 ID: ${id ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000)}');
+      debugPrint('   📦 Has payload: ${payload != null}');
+
+      // Convert payload to JSON string for local notifications
+      String? payloadString;
+      if (payload != null) {
+        payloadString = jsonEncode(payload);
+      }
 
       await flutterLocalNotificationsPlugin.show(
         id ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -334,9 +419,9 @@ class NotificationService {
           ),
           iOS: const DarwinNotificationDetails(),
         ),
-        payload: payload != null ? jsonEncode(payload) : null,
+        payload: payloadString,
       );
-      debugPrint('✅ Instant notification shown successfully');
+      debugPrint('✅ Instant notification displayed successfully');
     } catch (e, stackTrace) {
       debugPrint('❌ Error showing notification: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -373,6 +458,22 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint('❌ Error listing pending notifications: $e');
+    }
+  }
+
+  /// Get current FCM token (useful for testing)
+  Future<String?> getFcmToken() async {
+    try {
+      final token = await firebaseMessaging.getToken();
+      if (token != null) {
+        debugPrint('📱 Current FCM Token: $token');
+      } else {
+        debugPrint('⚠️ No FCM token available');
+      }
+      return token;
+    } catch (e) {
+      debugPrint('❌ Error retrieving FCM token: $e');
+      return null;
     }
   }
 
