@@ -30,28 +30,39 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 /// This runs when the app is terminated or in the background
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  debugPrint('🌌 ========== BACKGROUND/TERMINATED MESSAGE ==========');
-  debugPrint('🌌 Message ID: ${message.messageId}');
-  debugPrint('🌌 Title: ${message.notification?.title}');
-  debugPrint('🌌 Body: ${message.notification?.body}');
-  debugPrint('🌌 Data: ${message.data}');
-  debugPrint('🌌 =============================================');
-
-  // Display notification using local notifications
-  if (message.notification != null) {
-    debugPrint('📲 Showing background notification...');
-    await NotificationService().showInstantNotification(
-      title: message.notification!.title ?? 'New Notification',
-      body: message.notification!.body ?? '',
-      payload: message.data,
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('✅ Background notification displayed');
-  } else {
-    debugPrint('⚠️ No notification payload in background message');
+
+    debugPrint('🌌 ========== BACKGROUND/TERMINATED MESSAGE ==========');
+    debugPrint('🌌 Message ID: ${message.messageId}');
+    debugPrint('🌌 Title: ${message.notification?.title}');
+    debugPrint('🌌 Body: ${message.notification?.body}');
+    debugPrint('🌌 Data: ${message.data}');
+    debugPrint('🌌 =============================================');
+
+    // Display notification using local notifications
+    if (message.notification != null) {
+      debugPrint('📲 Showing background notification...');
+      final service = NotificationService();
+      // Initialize the service if needed (safe to call multiple times)
+      await service.initialize();
+
+      await service.showInstantNotification(
+        title: message.notification!.title ?? 'New Notification',
+        body: message.notification!.body ?? '',
+        payload: message.data.isNotEmpty ? message.data : null,
+      );
+      debugPrint('✅ Background notification displayed');
+    } else {
+      debugPrint('⚠️ No notification payload in background message');
+    }
+  } catch (e, stackTrace) {
+    debugPrint('❌ Error in background handler: $e');
+    debugPrint('Stack trace: $stackTrace');
   }
 }
 
@@ -90,10 +101,18 @@ void main() async {
     // Set navigator key before notifications
     NotificationService().setNavigatorKey(navigatorKey);
 
-    // Initialize local notifications
+    // Initialize local notifications with timeout
     debugPrint('📵 Initializing local notifications...');
-    await NotificationService().initialize();
-    debugPrint('✅ Local notifications initialized');
+    try {
+      await NotificationService()
+          .initialize()
+          .timeout(const Duration(seconds: 15), onTimeout: () {
+        debugPrint('⚠️ Notification initialization timed out, app will continue');
+      });
+    } catch (e) {
+      debugPrint('⚠️ Error initializing notifications: $e, app will continue');
+    }
+    debugPrint('✅ Local notifications initialization completed');
 
     // Register background message handler for FCM
     debugPrint('🌌 Registering FCM background message handler...');
@@ -106,6 +125,7 @@ void main() async {
   } catch (e, stackTrace) {
     debugPrint('❌ Error in main: $e');
     debugPrint('Stack trace: $stackTrace');
+    // Still run app even if initialization fails
     runApp(const MyApp());
   }
 }

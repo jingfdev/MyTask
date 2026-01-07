@@ -13,6 +13,7 @@ class NotificationService {
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   late FirebaseMessaging firebaseMessaging;
   GlobalKey<NavigatorState>? _navigatorKey;
+  bool _initialized = false;
 
   final StreamController<Map<String, dynamic>> _notificationTapStream =
       StreamController<Map<String, dynamic>>.broadcast();
@@ -56,8 +57,17 @@ class NotificationService {
 
   /// Initialize notifications
   /// This method sets up local and Firebase messaging
+  /// Safe to call multiple times - will only initialize once
   Future<void> initialize() async {
+    // Prevent duplicate initialization
+    if (_initialized) {
+      debugPrint('ℹ️ NotificationService already initialized. Skipping.');
+      return;
+    }
+
     try {
+      _initialized = true;
+
       // Verify timezone is initialized before anything else
       if (tz.local.name == 'UTC' || tz.local.name.isEmpty) {
         debugPrint('⚠️ WARNING: Timezone may not be properly initialized!');
@@ -69,91 +79,190 @@ class NotificationService {
 
       // Skip local notifications initialization on web (not supported)
       if (!kIsWeb) {
-        // Initialize local notifications
-        const AndroidInitializationSettings initializationSettingsAndroid =
-            AndroidInitializationSettings('@mipmap/ic_launcher');
+        try {
+          // Initialize local notifications
+          const AndroidInitializationSettings initializationSettingsAndroid =
+              AndroidInitializationSettings('@mipmap/ic_launcher');
 
-        const DarwinInitializationSettings initializationSettingsIOS =
-            DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+          const DarwinInitializationSettings initializationSettingsIOS =
+              DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
 
-        const InitializationSettings initializationSettings =
-            InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS,
-        );
+          const InitializationSettings initializationSettings =
+              InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+          );
 
-        await flutterLocalNotificationsPlugin.initialize(
-          initializationSettings,
-          onDidReceiveNotificationResponse: _onNotificationTap,
-        );
+          await flutterLocalNotificationsPlugin
+              .initialize(
+                initializationSettings,
+                onDidReceiveNotificationResponse: _onNotificationTap,
+              )
+              .timeout(
+                const Duration(seconds: 5),
+                onTimeout: () {
+                  debugPrint(
+                      '⚠️ Local notifications initialization timed out');
+                },
+              );
+        } catch (e) {
+          debugPrint('⚠️ Error initializing local notifications: $e');
+        }
       }
 
-      await _requestPermissions();
-      await _createNotificationChannel();
-      await _initializeFirebaseMessaging();
-
-      final initialMessage = await firebaseMessaging.getInitialMessage();
-      if (initialMessage != null) {
-        _handleNotificationNavigation(
-          initialMessage.data.isNotEmpty ? jsonEncode(initialMessage.data) : null,
+      // Request permissions with timeout
+      try {
+        await _requestPermissions().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            debugPrint('⚠️ Permission request timed out, continuing...');
+          },
         );
+      } catch (e) {
+        debugPrint('⚠️ Error requesting permissions: $e');
+      }
+
+      // Create notification channel
+      try {
+        await _createNotificationChannel().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('⚠️ Notification channel creation timed out');
+          },
+        );
+      } catch (e) {
+        debugPrint('⚠️ Error creating notification channel: $e');
+      }
+
+      // Initialize Firebase messaging
+      try {
+        await _initializeFirebaseMessaging().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            debugPrint('⚠️ Firebase messaging initialization timed out');
+          },
+        );
+      } catch (e) {
+        debugPrint('⚠️ Error initializing Firebase messaging: $e');
+      }
+
+      // Handle initial message (non-blocking)
+      try {
+        final initialMessage = await firebaseMessaging
+            .getInitialMessage()
+            .timeout(const Duration(seconds: 3), onTimeout: () => null);
+        if (initialMessage != null) {
+          _handleNotificationNavigation(
+            initialMessage.data.isNotEmpty
+                ? jsonEncode(initialMessage.data)
+                : null,
+          );
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error handling initial message: $e');
       }
 
       debugPrint('✅ NotificationService initialized successfully');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _initialized = false;
       debugPrint('❌ Error initializing NotificationService: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
   Future<void> _requestPermissions() async {
     debugPrint('🔐 Requesting FCM permissions...');
 
-    final NotificationSettings settings = await firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-      carPlay: false,
-      criticalAlert: false,
-      announcement: false,
-    );
+    try {
+      // Request FCM permissions with timeout to prevent hanging
+      try {
+        final NotificationSettings settings =
+            await firebaseMessaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+          carPlay: false,
+          criticalAlert: false,
+          announcement: false,
+        ).timeout(const Duration(seconds: 5));
 
-    debugPrint('📱 FCM Permission Status: ${settings.authorizationStatus}');
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('✅ FCM permissions granted (Full Authorization)');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-      debugPrint('⚠️ FCM permissions granted (Provisional)');
-    } else {
-      debugPrint('❌ FCM permissions denied');
+        debugPrint('📱 FCM Permission Status: ${settings.authorizationStatus}');
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          debugPrint('✅ FCM permissions granted (Full Authorization)');
+        } else if (settings.authorizationStatus ==
+            AuthorizationStatus.provisional) {
+          debugPrint('⚠️ FCM permissions granted (Provisional)');
+        } else {
+          debugPrint('⚠️ FCM permissions not determined or denied');
+        }
+      } on TimeoutException {
+        debugPrint('⚠️ FCM permission request timed out, continuing...');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error requesting FCM permissions: $e');
     }
 
     if (Platform.isAndroid) {
-      debugPrint('📱 Requesting Android-specific permissions...');
-      final androidPlugin = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+      try {
+        debugPrint('📱 Requesting Android-specific permissions...');
+        final androidPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
 
-      // Request notification permission
-      final bool? notificationPermission = await androidPlugin?.requestNotificationsPermission();
-      debugPrint('   Notification permission: ${notificationPermission ?? 'unknown'}');
+        if (androidPlugin == null) {
+          debugPrint('⚠️ Android plugin not available');
+          return;
+        }
 
-      // Request exact alarm permission
-      final bool? isAllowed =
-          await androidPlugin?.canScheduleExactNotifications();
-      debugPrint('   Can schedule exact notifications: $isAllowed');
+        // Request notification permission with timeout
+        try {
+          final bool? notificationPermission = await androidPlugin
+              .requestNotificationsPermission()
+              .timeout(const Duration(seconds: 3));
+          debugPrint('   Notification permission: $notificationPermission');
+        } on TimeoutException {
+          debugPrint('   ⚠️ Notification permission request timed out');
+        } catch (e) {
+          debugPrint('   ⚠️ Error requesting notification permission: $e');
+        }
 
-      if (isAllowed == false) {
-        debugPrint('⚠️ Requesting exact alarm permissions...');
-        final bool? exactAlarmsGranted = await androidPlugin?.requestExactAlarmsPermission();
-        debugPrint('   Exact alarms permission granted: $exactAlarmsGranted');
+        // Request exact alarm permission with timeout
+        try {
+          final bool? isAllowed = await androidPlugin
+              .canScheduleExactNotifications()
+              .timeout(const Duration(seconds: 3));
+          debugPrint('   Can schedule exact notifications: $isAllowed');
+
+          if (isAllowed == false) {
+            debugPrint('⚠️ Requesting exact alarm permissions...');
+            try {
+              final bool? exactAlarmsGranted = await androidPlugin
+                  .requestExactAlarmsPermission()
+                  .timeout(const Duration(seconds: 3));
+              debugPrint(
+                  '   Exact alarms permission granted: $exactAlarmsGranted');
+            } on TimeoutException {
+              debugPrint('   ⚠️ Exact alarm permission request timed out');
+            } catch (e) {
+              debugPrint('   ⚠️ Error requesting exact alarms: $e');
+            }
+          }
+        } on TimeoutException {
+          debugPrint('   ⚠️ Exact notification check timed out');
+        } catch (e) {
+          debugPrint('   ⚠️ Error checking exact notification permissions: $e');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error in Android permission flow: $e');
       }
     }
 
-    debugPrint('✅ Permission request completed');
+    debugPrint('✅ Permission request flow completed');
   }
 
   Future<void> _createNotificationChannel() async {
@@ -183,53 +292,79 @@ class NotificationService {
     debugPrint('🚀 Initializing Firebase Cloud Messaging (FCM)...');
 
     try {
-      // Get initial FCM token
-      String? token = await firebaseMessaging.getToken();
-      if (token != null) {
-        debugPrint('📱 ========== FCM TOKEN ==========');
-        debugPrint('📱 $token');
-        debugPrint('📱 ================================');
-        if (onTokenGenerated != null) {
-          onTokenGenerated!(token);
+      // Get initial FCM token with timeout
+      try {
+        String? token =
+            await firebaseMessaging.getToken().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('⚠️ FCM token retrieval timed out');
+            return null;
+          },
+        );
+        if (token != null) {
+          debugPrint('📱 ========== FCM TOKEN ==========');
+          debugPrint('📱 $token');
+          debugPrint('📱 ================================');
+          if (onTokenGenerated != null) {
+            onTokenGenerated!(token);
+          }
+        } else {
+          debugPrint('⚠️ Failed to retrieve FCM token on initialization');
         }
-      } else {
-        debugPrint('⚠️ Failed to retrieve FCM token on initialization');
+      } catch (e) {
+        debugPrint('⚠️ Error getting FCM token: $e');
       }
 
       // Listen for token refresh
       debugPrint('🔄 Setting up FCM token refresh listener...');
-      firebaseMessaging.onTokenRefresh.listen((newToken) {
-        debugPrint('🔄 ========== NEW FCM TOKEN ==========');
-        debugPrint('🔄 $newToken');
-        debugPrint('🔄 ====================================');
-        if (onTokenGenerated != null) {
-          onTokenGenerated!(newToken);
-        }
-      });
+      firebaseMessaging.onTokenRefresh.listen(
+        (newToken) {
+          debugPrint('🔄 ========== NEW FCM TOKEN ==========');
+          debugPrint('🔄 $newToken');
+          debugPrint('🔄 ====================================');
+          if (onTokenGenerated != null) {
+            onTokenGenerated!(newToken);
+          }
+        },
+        onError: (error) {
+          debugPrint('⚠️ Error in token refresh stream: $error');
+        },
+      );
 
       // Listen for foreground messages
       debugPrint('👀 Setting up foreground message listener...');
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('📨 ========== FOREGROUND MESSAGE ==========');
-        debugPrint('📨 Message ID: ${message.messageId}');
-        debugPrint('📨 Title: ${message.notification?.title}');
-        debugPrint('📨 Body: ${message.notification?.body}');
-        debugPrint('📨 Data: ${message.data}');
-        debugPrint('📨 ========================================');
-        _handleForegroundMessage(message);
-      });
+      FirebaseMessaging.onMessage.listen(
+        (RemoteMessage message) {
+          debugPrint('📨 ========== FOREGROUND MESSAGE ==========');
+          debugPrint('📨 Message ID: ${message.messageId}');
+          debugPrint('📨 Title: ${message.notification?.title}');
+          debugPrint('📨 Body: ${message.notification?.body}');
+          debugPrint('📨 Data: ${message.data}');
+          debugPrint('📨 ========================================');
+          _handleForegroundMessage(message);
+        },
+        onError: (error) {
+          debugPrint('⚠️ Error in foreground message stream: $error');
+        },
+      );
 
       // Listen for background/terminated message interactions
       debugPrint('🖥️ Setting up message opened app listener...');
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('🔔 ========== MESSAGE OPENED APP ==========');
-        debugPrint('🔔 Message ID: ${message.messageId}');
-        debugPrint('🔔 Title: ${message.notification?.title}');
-        debugPrint('🔔 Body: ${message.notification?.body}');
-        debugPrint('🔔 Data: ${message.data}');
-        debugPrint('🔔 =========================================');
-        _handleMessageOpenedApp(message);
-      });
+      FirebaseMessaging.onMessageOpenedApp.listen(
+        (RemoteMessage message) {
+          debugPrint('🔔 ========== MESSAGE OPENED APP ==========');
+          debugPrint('🔔 Message ID: ${message.messageId}');
+          debugPrint('🔔 Title: ${message.notification?.title}');
+          debugPrint('🔔 Body: ${message.notification?.body}');
+          debugPrint('🔔 Data: ${message.data}');
+          debugPrint('🔔 =========================================');
+          _handleMessageOpenedApp(message);
+        },
+        onError: (error) {
+          debugPrint('⚠️ Error in message opened app stream: $error');
+        },
+      );
 
       debugPrint('✅ Firebase Cloud Messaging initialized successfully');
     } catch (e, stackTrace) {
