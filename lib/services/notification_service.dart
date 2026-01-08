@@ -107,6 +107,7 @@ class NotificationService {
                 onTimeout: () {
                   debugPrint(
                       '⚠️ Local notifications initialization timed out');
+                  return null;
                 },
               );
         } catch (e) {
@@ -320,50 +321,65 @@ class NotificationService {
       debugPrint('🔄 Setting up FCM token refresh listener...');
       firebaseMessaging.onTokenRefresh.listen(
         (newToken) {
-          debugPrint('🔄 ========== NEW FCM TOKEN ==========');
-          debugPrint('🔄 $newToken');
-          debugPrint('🔄 ====================================');
-          if (onTokenGenerated != null) {
-            onTokenGenerated!(newToken);
+          try {
+            debugPrint('🔄 ========== NEW FCM TOKEN ==========');
+            debugPrint('🔄 $newToken');
+            debugPrint('🔄 ====================================');
+            if (onTokenGenerated != null) {
+              onTokenGenerated!(newToken);
+            }
+          } catch (e) {
+            debugPrint('⚠️ Error handling token refresh: $e');
           }
         },
         onError: (error) {
           debugPrint('⚠️ Error in token refresh stream: $error');
         },
+        cancelOnError: false,
       );
 
       // Listen for foreground messages
       debugPrint('👀 Setting up foreground message listener...');
       FirebaseMessaging.onMessage.listen(
         (RemoteMessage message) {
-          debugPrint('📨 ========== FOREGROUND MESSAGE ==========');
-          debugPrint('📨 Message ID: ${message.messageId}');
-          debugPrint('📨 Title: ${message.notification?.title}');
-          debugPrint('📨 Body: ${message.notification?.body}');
-          debugPrint('📨 Data: ${message.data}');
-          debugPrint('📨 ========================================');
-          _handleForegroundMessage(message);
+          try {
+            debugPrint('📨 ========== FOREGROUND MESSAGE ==========');
+            debugPrint('📨 Message ID: ${message.messageId}');
+            debugPrint('📨 Title: ${message.notification?.title}');
+            debugPrint('📨 Body: ${message.notification?.body}');
+            debugPrint('📨 Data: ${message.data}');
+            debugPrint('📨 ========================================');
+            _handleForegroundMessage(message);
+          } catch (e) {
+            debugPrint('⚠️ Error handling foreground message: $e');
+          }
         },
         onError: (error) {
           debugPrint('⚠️ Error in foreground message stream: $error');
         },
+        cancelOnError: false,
       );
 
       // Listen for background/terminated message interactions
       debugPrint('🖥️ Setting up message opened app listener...');
       FirebaseMessaging.onMessageOpenedApp.listen(
         (RemoteMessage message) {
-          debugPrint('🔔 ========== MESSAGE OPENED APP ==========');
-          debugPrint('🔔 Message ID: ${message.messageId}');
-          debugPrint('🔔 Title: ${message.notification?.title}');
-          debugPrint('🔔 Body: ${message.notification?.body}');
-          debugPrint('🔔 Data: ${message.data}');
-          debugPrint('🔔 =========================================');
-          _handleMessageOpenedApp(message);
+          try {
+            debugPrint('🔔 ========== MESSAGE OPENED APP ==========');
+            debugPrint('🔔 Message ID: ${message.messageId}');
+            debugPrint('🔔 Title: ${message.notification?.title}');
+            debugPrint('🔔 Body: ${message.notification?.body}');
+            debugPrint('🔔 Data: ${message.data}');
+            debugPrint('🔔 =========================================');
+            _handleMessageOpenedApp(message);
+          } catch (e) {
+            debugPrint('⚠️ Error handling message opened app: $e');
+          }
         },
         onError: (error) {
           debugPrint('⚠️ Error in message opened app stream: $error');
         },
+        cancelOnError: false,
       );
 
       debugPrint('✅ Firebase Cloud Messaging initialized successfully');
@@ -412,13 +428,22 @@ class NotificationService {
     try {
       final Map<String, dynamic> data = jsonDecode(payloadStr);
       if (data.containsKey('route')) {
-        _navigatorKey!.currentState
-            ?.pushNamed(data['route'] as String, arguments: data);
+        final currentState = _navigatorKey?.currentState;
+        if (currentState != null && currentState.mounted) {
+          currentState.pushNamed(data['route'] as String, arguments: data);
+        } else {
+          debugPrint('⚠️ Navigator not available for navigation');
+        }
       } else if (data.containsKey('taskId')) {
-        _navigatorKey!.currentState?.pushNamed('/tasks', arguments: data);
+        final currentState = _navigatorKey?.currentState;
+        if (currentState != null && currentState.mounted) {
+          currentState.pushNamed('/tasks', arguments: data);
+        } else {
+          debugPrint('⚠️ Navigator not available for navigation');
+        }
       }
     } catch (e) {
-      debugPrint('❌ Navigation error: $e');
+      debugPrint('⚠️ Navigation error: $e');
     }
   }
 

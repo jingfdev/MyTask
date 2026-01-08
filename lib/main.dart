@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'firebase_options.dart';
 
@@ -47,16 +46,30 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     // Display notification using local notifications
     if (message.notification != null) {
       debugPrint('📲 Showing background notification...');
-      final service = NotificationService();
-      // Initialize the service if needed (safe to call multiple times)
-      await service.initialize();
+      try {
+        final service = NotificationService();
+        // Initialize the service if needed (safe to call multiple times)
+        await service.initialize().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('⚠️ Notification service initialization timed out');
+          },
+        );
 
-      await service.showInstantNotification(
-        title: message.notification!.title ?? 'New Notification',
-        body: message.notification!.body ?? '',
-        payload: message.data.isNotEmpty ? message.data : null,
-      );
-      debugPrint('✅ Background notification displayed');
+        await service.showInstantNotification(
+          title: message.notification!.title ?? 'New Notification',
+          body: message.notification!.body ?? '',
+          payload: message.data.isNotEmpty ? message.data : null,
+        ).timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('⚠️ Showing notification timed out');
+          },
+        );
+        debugPrint('✅ Background notification displayed');
+      } catch (serviceError) {
+        debugPrint('⚠️ Error displaying background notification: $serviceError');
+      }
     } else {
       debugPrint('⚠️ No notification payload in background message');
     }
@@ -114,12 +127,16 @@ void main() async {
     }
     debugPrint('✅ Local notifications initialization completed');
 
-    // Register background message handler for FCM
+    // Register background message handler for FCM with timeout
     debugPrint('🌌 Registering FCM background message handler...');
-    FirebaseMessaging.onBackgroundMessage(
-      _firebaseMessagingBackgroundHandler,
-    );
-    debugPrint('✅ FCM background message handler registered');
+    try {
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
+      debugPrint('✅ FCM background message handler registered');
+    } catch (e) {
+      debugPrint('⚠️ Error registering FCM background handler: $e, app will continue');
+    }
 
     runApp(MyApp(initialThemeViewModel: themeViewModel));
   } catch (e, stackTrace) {
@@ -141,26 +158,53 @@ class AppBootstrap extends StatefulWidget {
   State<AppBootstrap> createState() => _AppBootstrapState();
 }
 
-class _AppBootstrapState extends State<AppBootstrap> {
+class _AppBootstrapState extends State<AppBootstrap> with WidgetsBindingObserver {
   bool _ran = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // Run after first frame so Provider is available.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || _ran) return;
       _ran = true;
 
-      final userVm = context.read<UserViewModel>();
+      try {
+        final userVm = context.read<UserViewModel>();
 
-      // ✅ Always have a guest user if not logged in
-      await userVm.ensureGuestUser();
+        // ✅ Always have a guest user if not logged in
+        await userVm.ensureGuestUser();
 
-      // ✅ Important for WEB redirect flow (popup blocked -> redirect)
-      await userVm.handleRedirectResult();
+        // ✅ Important for WEB redirect flow (popup blocked -> redirect)
+        await userVm.handleRedirectResult();
+      } catch (e) {
+        debugPrint('⚠️ Error in AppBootstrap initialization: $e');
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('🔄 App lifecycle changed to: $state');
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('✅ App resumed, ensuring user state is correct');
+      try {
+        if (mounted) {
+          final userVm = context.read<UserViewModel>();
+          userVm.ensureGuestUser();
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error restoring user state: $e');
+      }
+    }
   }
 
   @override
@@ -185,23 +229,35 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
-          // Hook FCM token -> save to Firestore whenever it's generated/refreshed.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final userVm = Provider.of<UserViewModel>(context, listen: false);
-            final taskVm = Provider.of<TaskViewModel>(context, listen: false);
+          // Hook FCM token → save to Firestore whenever it's generated/refreshed.
+          try {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              try {
+                final userVm = Provider.of<UserViewModel>(context, listen: false);
+                final taskVm = Provider.of<TaskViewModel>(context, listen: false);
 
-            debugPrint('🔗 Setting up FCM token callback...');
-            NotificationService().onTokenGenerated = (token) {
-              debugPrint('💾 Saving FCM token to Firestore...');
-              debugPrint('   Token: $token');
-              userVm.saveFcmToken(token);
-              debugPrint('✅ FCM token callback executed');
-            };
+                debugPrint('🔗 Setting up FCM token callback...');
+                NotificationService().onTokenGenerated = (token) {
+                  try {
+                    debugPrint('💾 Saving FCM token to Firestore...');
+                    debugPrint('   Token: $token');
+                    userVm.saveFcmToken(token);
+                    debugPrint('✅ FCM token callback executed');
+                  } catch (e) {
+                    debugPrint('⚠️ Error in token generation callback: $e');
+                  }
+                };
 
-            // ✅ Reschedule notifications on app startup
-            debugPrint('⏰ Rescheduling all reminders...');
-            taskVm.rescheduleAllReminders();
-          });
+                // ✅ Reschedule notifications on app startup
+                debugPrint('⏰ Rescheduling all reminders...');
+                taskVm.rescheduleAllReminders();
+              } catch (e) {
+                debugPrint('⚠️ Error in post-frame callback setup: $e');
+              }
+            });
+          } catch (e) {
+            debugPrint('⚠️ Error setting up notification callbacks: $e');
+          }
 
           return Consumer<ThemeViewModel>(
             builder: (context, themeVm, _) {

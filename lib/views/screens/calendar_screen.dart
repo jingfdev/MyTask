@@ -45,7 +45,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _showQuickAddTask(BuildContext context) async {
-    final bool wantsToRegister = await showAuthPromptDialog(context);
+    // Check if user is already authenticated (not a guest/anonymous)
+    final userViewModel = context.read<UserViewModel>();
+    final isGuest = userViewModel.user?.isAnonymous ?? true;
+
+    // Only show auth dialog if user is a guest
+    bool wantsToRegister = false;
+    if (isGuest) {
+      wantsToRegister = await showAuthPromptDialog(context);
+    }
 
     if (wantsToRegister) {
       HapticFeedback.lightImpact();
